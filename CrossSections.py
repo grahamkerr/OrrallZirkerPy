@@ -3,12 +3,150 @@ import numpy as np
 
 class CrossSec:
 
+    '''
+    This class takes a proton energy, either a single value or a list, 
+    and has various methods to compute cross sections of charge exchange 
+    interactions between that energetic proton with ambient hydrogen, and 
+    relevant processes that determine the interaction of the resulting 
+    energetic neutral hydrogen with the ambient plasma.
+
+    Each cross section has different valid energy ranges, and have been extended 
+    via fitting to go to arbrotarily high energy (though of course those extrapolations 
+    should be used with care). These cross sections should not be used for interactions with 
+    protons on order of eV energy. 
+
+
+    '''
+
     def __init__(self, energy):
+        
+        ## Turn to np array if an integer or float are provided
+        if type(energy) == int:
+            energy = np.array(energy)
+        if type(energy) == float:
+            energy = np.array(energy)
+        if type(energy) == tuple:
+            energy = np.array(energy)
+
         self.energy = energy
+        self.nE = len(self.energy)
+
+    def cs_bw99(self):
+
+        '''
+        This function will calculate the cross-sections required 
+        to compute the population of suprathermal neutral hydrogen,
+        given an energy E in keV. 
+
+        Those cross sections are: 
+
+        Q_pj -- the charge exchange cs from protons to H level j = 1,2
+
+        Q_ijP, Q_ijH, Q_oijE -- the collisional ionisation or excitation 
+                                cross sections from i-->j 
+
+        The following cross sections are computed:
+
+        Q_p1 -> charge exchange to n=1 (ground)
+        Q_p2 -> charge exchange to n=2 
+        Q_1pP -> collisional ionisation via protons n=1 to proton
+        Q_1pH -> collisional ionisation via hydrogen n=1 to proton
+        Q_1pE -> collisional ionisation via electrons n=1 to proton
+        Q_12P -> collisional excitation via protons n=1 to n=2
+        Q_12H -> collisional excitation via hydrogen n=1 to n=2
+        Q_12E -> collisional excitation via electrons n=1 to n=2
+        Q_23E -> collisional excitation via electrons n=2 to n=3
+
+        For details, including references to the data from which the polynomials 
+        were derived, see Brosius & Woodgate 1999, ApJ 514
+
+        Parameters
+        __________
+
+        energy : float
+            The energy at which to compute the cross sections, in keV
 
 
-    def cs_fang95(self
-    	):
+        Outputs
+        _________
+
+        cross_secs : 
+            An object containing each cross section, in 10^-17 cm^2 
+
+
+        Notes
+        ________
+
+        BW99 only computed the cross-sections required for Lyman alpha. 
+        For the Lyman beta or H-alpha problem we need additional rates.
+
+        Graham Kerr
+        July 2021
+
+        '''
+
+        ########################################################################
+        # Some preliminary set up
+        ########################################################################
+
+        ## Turn to list if an integer or float are provided
+        # if type(self.energy) == int:
+        #     self.energy = [self.energy]
+        # if type(self.energy) == float:
+        #     self.energy = [self.energy]
+
+        ## How many energies to calculate
+        # nE = len(self.energy)
+        
+        Q_p1 = np.zeros([self.nE],dtype = np.float64)
+        Q_p2 = np.zeros([self.nE],dtype = np.float64)
+        Q_1pP = np.zeros([self.nE],dtype = np.float64)
+        Q_1pH = np.zeros([self.nE],dtype = np.float64)
+        Q_1pE = np.zeros([self.nE],dtype = np.float64)
+        Q_12P = np.zeros([self.nE],dtype = np.float64)
+        Q_12H = np.zeros([self.nE],dtype = np.float64)
+        Q_12E = np.zeros([self.nE],dtype = np.float64)
+        Q_23E = np.zeros([self.nE],dtype = np.float64)
+
+
+
+        ########################################################################
+        # Go through each energy and calculate the cross section
+        ########################################################################
+
+        for ind in range(self.nE):
+
+            ########
+            # Q_p1
+            ########
+            Q_p1[ind] = 10.00**(-13.69 - 2.03*np.log10(self.energy[ind]) +
+                                         1.39*np.log10(self.energy[ind])**2.0 -
+                                         0.827*np.log10(self.energy[ind])**3.0 +
+                                         0.0988*np.log10(self.energy[ind])**4.0 
+                                )
+
+            ########
+            # Q_p2
+            ########          
+            Q_p2[ind] = 10.00**(-19.02 + 5.59*np.log10(self.energy[ind]) -
+                                         2.70*np.log10(self.energy[ind])**2.0 -
+                                         0.00586*np.log10(self.energy[ind])**3.0 +
+                                         0.0400*np.log10(self.energy[ind])**4.0 
+                                )
+
+    
+        class cs_bw99_out:
+            def __init__(selfout):
+                selfout.Q_p1 = Q_p1/1e-17
+                selfout.Q_p2 = Q_p2/1e-17
+                selfout.energy = self.energy
+                selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+        out = cs_bw99_out()
+
+        return out
+
+    def cs_fang95(self):
 
         '''
         This function will calculate the cross-sections required 
@@ -51,7 +189,7 @@ class CrossSec:
         _________
 
         cross_secs : 
-            A dictionary containing each cross section, in 10^-17 cm^2 
+             An object containing each cross section, in 10^-17 cm^2 
 
 
         Graham Kerr
@@ -64,35 +202,36 @@ class CrossSec:
         ########################################################################
  
         ## Turn to list if an integer or float are provided
-        if type(self.energy) == int:
-            self.energy = [self.energy]
-        if type(self.energy) == float:
-            self.energy = [self.energy]
+        # if type(self.energy) == int:
+        #     self.energy = [self.energy]
+        # if type(self.energy) == float:
+        #     self.energy = [self.energy]
 
         ## How many energies to calculate
-        nE = len(self.energy)
+        # nE = len(self.energy)
         
-        Q_p1 = np.zeros([nE],dtype = np.float64)
-        Q_p2 = np.zeros([nE],dtype = np.float64)
-        Q_p3 = np.zeros([nE],dtype = np.float64)
-        Q_1pP = np.zeros([nE],dtype = np.float64)
-        Q_1pH = np.zeros([nE],dtype = np.float64)
-        Q_1pE = np.zeros([nE],dtype = np.float64)
-        Q_12P = np.zeros([nE],dtype = np.float64)
-        Q_12H = np.zeros([nE],dtype = np.float64)
-        Q_12E = np.zeros([nE],dtype = np.float64)
-        Q_13P = np.zeros([nE],dtype = np.float64)
-        Q_13H = np.zeros([nE],dtype = np.float64)
-        Q_13E = np.zeros([nE],dtype = np.float64)
-        Q_23E = np.zeros([nE],dtype = np.float64)
+        Q_p1 = np.zeros([self.nE],dtype = np.float64)
+        Q_p2 = np.zeros([self.nE],dtype = np.float64)
+        Q_p3 = np.zeros([self.nE],dtype = np.float64)
+        Q_1pP = np.zeros([self.nE],dtype = np.float64)
+        Q_1pH = np.zeros([self.nE],dtype = np.float64)
+        Q_1pE = np.zeros([self.nE],dtype = np.float64)
+        Q_12P = np.zeros([self.nE],dtype = np.float64)
+        Q_12H = np.zeros([self.nE],dtype = np.float64)
+        Q_12E = np.zeros([self.nE],dtype = np.float64)
+        Q_13P = np.zeros([self.nE],dtype = np.float64)
+        Q_13H = np.zeros([self.nE],dtype = np.float64)
+        Q_13E = np.zeros([self.nE],dtype = np.float64)
+        Q_23E = np.zeros([self.nE],dtype = np.float64)
 
         ########################################################################
         # Go through each energy and calculate the cross section
         ########################################################################
 
-        for ind in range(nE):
+        for ind in range(self.nE):
 
-            print(self.energy[ind])
+            # print(self.energy[ind])
+
             ########
             # Q_p1
             ########
@@ -118,10 +257,10 @@ class CrossSec:
             # Q_p3
             ########
             if self.energy[ind] <= 16.0:
-                a0,a1,a2,a3,a4 = 1.1452, -1.33788, 3.9887e-1, 3.6992e-2, 1.0810e-3
+                a0,a1,a2,a3,a4 = 1.1452, -1.33788, 3.9887e-1, -3.6992e-2, 1.0810e-3
                 Q_p3[ind] = a0 + (a1*self.energy[ind]**1) + (a2*self.energy[ind]**2) + (a3*self.energy[ind]**3) + (a4*self.energy[ind]**4)
             elif self.energy[ind] > 16.0:
-                a0,a1,a2,a3 = 2.0134, -0.03773, 2.500e-4, -4.3204e-7
+                a0,a1,a2,a3 = 2.0134, -0.03773, 2.2500e-4, -4.3204e-7
                 Q_p3[ind] = a0 + (a1*self.energy[ind]**1) + (a2*self.energy[ind]**2) + (a3*self.energy[ind]**3)
 
             ########
@@ -220,6 +359,7 @@ class CrossSec:
             Q_23E[ind] = a0 + (a1*(self.energy[ind]/1e3)**1) + (a2*(self.energy[ind]/1e3)**2) + (a3*(self.energy[ind]/1e3)**3) 
             
         
+        ## A class to output the cross sections
         class cs_fang95_out:
             def __init__(selfout):
                 selfout.Q_p1 = Q_p1
@@ -238,28 +378,189 @@ class CrossSec:
                 selfout.energy = self.energy
                 selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
-        # out  = {'Q_p1':Q_p1,
-        #              'Q_p2':Q_p2,
-        #              'Q_p3':Q_p3,
-        #              'Q_1pP':Q_1pP,
-        #              'Q_1pH':Q_1pH,
-        #              'Q_1pE':Q_1pE,
-        #              'Q_12P':Q_12P,
-        #              'Q_12H':Q_12H,
-        #              'Q_12E':Q_12E,
-        #              'Q_13P':Q_13P,
-        #              'Q_13H':Q_13H,
-        #              'Q_13E':Q_13E,
-        #              'Q_23E':Q_23E,
-        #              'self.energy':self.energy,
-        #              'Units':'energy in [keV], Q in [10^-17 cm^-2]'}
-
-        # out = cs_fang95_out(Q_p1, Q_p2, Q_p3, 
-        #                     Q_1pP, Q_1pH, Q_1pE,
-        #                     Q_12P, Q_12H, Q_12E,
-        #                     Q_13P, Q_13H, Q_13E,
-        #                     Q_23E)
         out = cs_fang95_out()
 
         return out
 
+
+class cs_cheshire70:
+
+    '''
+    This class holds the energy and cross sections for charge transfer 
+    from Cheshire et al 1970 J. Phys. B, 3 813, Table 5.
+   
+    Cross sections are of collisions between protons and neutral H to 
+
+    1s : Q_p1
+    2s : Q_p_2s
+    2p : Q_p_2p
+    2s+2p: Q_p2
+ 
+    Energy range 1-1000 keV
+
+    '''
+        
+    def __init__(self):
+        self.energy = np.array((1.0, 2.0, 4.0, 7.0, 10.0, 15.0, 
+                                20.0, 25.0, 30.0, 40.0, 60.0, 
+                                70.0, 100.0, 300.0, 1000.0))
+        self.Q_p1 = np.array((1.912e2, 1.476e2, 1.131e2, 8.989e1, 7.775e1, 5.819e1, 
+                     4.140e1, 2.927e1, 2.090e1, 1.129e1, 4.303e0, 2.738e0, 
+                     8.889e-1, 8.507e-3, 2.628e-5))
+        self.Q_p_2s = np.array((1.153e-1, 3.466e-1, 4.133e-1, 8.024e-1, 1.940e0, 
+                       3.089e0, 3.760e0, 3.726e0, 3.345e0, 2.488e0, 1.184e0, 
+                       7.984e-1, 2.634e-1, 1.919e-3, 4.120e-6))
+        self.Q_p_2p = np.array((2.224e0, 2.683e0, 2.983e0, 3.189e0, 3.309e0,
+                       2.029e0, 1.633e0, 1.590e0, 1.417e0, 9.142e-1, 
+                       3.844e-1, 2.424e-1, 5.578e-2, 1.964e-4, 1.466e-7))
+        self.Q_p2 = self.Q_p_2s + self.Q_p_2p
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+class cs_ludde82:
+
+    '''
+    This class holds the energy and cross sections for charge transfer 
+    from Ludde et al 1982 J. Phys. B, 15 2703, Table 1.
+   
+    Cross sections are of collisions between protons and neutral H to 
+
+    1s : Q_p1
+    2s : Q_p_2s
+    2p : Q_p_2p
+    2s+2p: Q_p2
+    n=3 : Q_p3
+ 
+    Energy range 1-50 keV
+
+    '''
+        
+    def __init__(self):
+        self.energy = np.array((1.0,2.0,4.0,6.0,8.0,14.0,16.0,25.0,50.0))
+        self.Q_p1 = np.array((147.00, 123.00, 103.00, 85.0, 79.20, 59.0, 53.70, 31.30, 3.50))
+        self.Q_p_2s = np.array((0.04, 0.13, 0.34, 0.59, 1.20, 2.15, 2.40, 2.77, 0.87))
+        self.Q_p_2p = np.array((2.20, 2.86, 2.67, 2.85, 3.15, 4.05, 3.86, 1.26, 0.53))
+        self.Q_p2 = np.array((2.24, 2.99, 3.01, 3.44, 4.35, 6.20, 6.26, 4.03, 1.40))
+        self.Q_p3 = np.array((0.02, 0.03, 0.13, 0.50, 1.75, 0.54, 1.21, 1.77, 0.18))
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+class cs_shakeshaft78:
+
+    '''
+    This class holds the energy and cross sections for charge transfer 
+    from Shakeshaft 1978 Phys. Rev. A, 18, Table 2
+   
+    Cross sections are of collisions between protons and neutral H to 
+
+    1s : Q_p1
+    2s : Q_p_2s
+    2p0 : Q_p_2p0
+    2p1 : Q_p_2p1
+    n=2: sum of 2s and 2p states, Q_p2
+    3s : Q_p_3s
+    3p0 : Q_p_3p0
+    3p1 : Q_p_3p1
+    3d0 : Q_p_3d0
+    3d1 : Q_p_3d1
+    3d2 : Q_p_3d2
+    n=3 : sum of 3s, 3p, 3d states, Q_p3
+ 
+    Energy range 15-200 keV
+
+    '''
+        
+    def __init__(self):
+        self.energy = np.array((15.0, 25.0, 40.0, 50.0, 60.0, 75.0, 145.0, 200.0))
+        self.Q_p1 = np.array((58.35, 30.35, 11.89, 6.78, 4.10, 2.10, 0.19, 0.047))
+        self.Q_p_2s = np.array((3.41, 3.98, 2.33, 1.39, 0.82, 0.42, 0.040, 0.0087))
+        self.Q_p_2p0 = np.array((0.94, 0.76, 0.39, 0.23, 0.12, 0.049, 0.0054, 0.0010))
+        self.Q_p_2p1 = np.array((2.16, 0.98, 0.34, 0.17, 0.089, 0.037, 0.0023, 0.0004))
+        self.Q_p2 = self.Q_p_2s + self.Q_p_2p0 + self.Q_p_2p1
+        self.Q_p_3s = np.array((0.53, 0.93, 0.67, 0.45, 0.29, 0.14, 0.012, 0.0030))
+        self.Q_p_3p0 = np.array((0.33, 0.28, 0.13, 0.077, 0.058, 0.018, 0.0017, 0.0004))
+        self.Q_p_3p1 = np.array((0.41, 0.24, 0.11, 0.058, 0.030, 0.012, 0.0008, 0.0001))
+        self.Q_p_3d0 = np.array((0.050, 0.031, 0.015, 0.017, 0.017, 0.026, 0.0010, 0.00004))
+        self.Q_p_3d1 = np.array((0.14, 0.025, 0.0091, 0.0057, 0.0030, 0.0010, 0.0001, 0.00002))
+        self.Q_p_3d2 = np.array((0.0089, 0.0045, 0.0015, 0.0008, 0.0004, 0.0002, 0.00002, 0.000002))
+        self.Q_p3 = self.Q_p_3s + self.Q_p_3p0 + self.Q_p_3p1 + self.Q_p_3d0 + self.Q_p_3d1 + self.Q_p_3d2
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+    
+
+class cs_bates53:
+
+    '''
+    This class holds the energy and cross sections for charge transfer 
+    from Bates & Dalgarno 1953 Proc. Phys. Soc. 66, Table 2
+   
+    Cross sections are of collisions between protons and neutral H to 
+
+    1s : Q_p1
+    2s : Q_p_2s
+    2p : Q_p_2p
+    n=2: sum of 2s and 2p states, Q_p2
+    3s : Q_p_3s
+    3p : Q_p_3p
+    3d : Q_p_3d
+    n=3 : sum of 3s, 3p, 3d states, Q_p3
+ 
+    Energy range  2.5 -- 7900 keV
+
+    '''
+
+    def __init__(self):
+        a0 = 5.3e-9
+        self.energy = 10.0**np.arange(-1.0, 2.6, 0.1) * 24.97 # keV
+        self.Q_p1 = 10.0**np.array((1.73, 1.62, 1.51, 1.39, 1.27, 
+                             1.14, 1.00, 0.86, 0.71, 0.54, 
+                             0.36, 0.17, -0.05, -0.28, -0.54, 
+                             -0.82, -1.13, -1.46, -1.82, -2.21, 
+                             -2.62, -3.06, -3.52, -3.99, -4.49, 
+                             -5.00, -5.52, -6.06, -6.60, -7.15, 
+                             -7.71, -8.28, -8.85, -9.42, -10.00, 
+                             -10.58))*np.pi*a0**2*1e17
+        self.Q_p_2s = 10**np.array((-0.88, -0.69, -0.54, -0.42, -0.34,
+                                    -0.29, -0.28, -0.30, -0.35, -0.43, 
+                                    -0.54, -0.68, -0.86, -1.06, -1.30,
+                                    -1.57, -1.88, -2.21, -2.59, -2.99,
+                                    -3.41, -3.86, -4.33, -4.83, -5.33,
+                                    -5.85, -6.48, -6.93, -7.48, -8.03,
+                                    -8.60, -9.17, -9.74, -10.32, -10.90,
+                                    -11.48))*np.pi*a0**2*1e17
+        self.Q_p_2p = 10**np.array((-1.12, -0.84, -0.60, -0.40, -0.24, 
+                                    -0.13, -0.07, -0.05, -0.08, -0.15, 
+                                    -0.18, -0.45, -0.67, -0.93, -1.24,
+                                    -1.59, -1.98, -2.41, -2.88, -3.37,
+                                    -3.90, -4.44, -5.01, -5.60, -6.21,
+                                    -6.83, -7.46, -8.10, -8.75, -9.41, 
+                                    -10.08,-10.74, -11.42, -12.10, -12.78, 
+                                    -13.46))*np.pi*a0**2*1e17
+        self.Q_p2 = self.Q_p_2s + self.Q_p_2p
+        self.Q_p_3s = 10**np.array((-1.86, -1.62, -1.42, -1.25, -1.11, 
+                                    -1.02, -0.96, -0.94, -0.96, -1.01,
+                                    -1.10, -1.22, -1.38, -1.57, -1.80, 
+                                    -2.07, -2.38, -2.72, -3.09, -3.49, 
+                                    -3.92, -4.37, -4.85, -5.34, -5.85, 
+                                    -6.37, -6.90, -7.45, -8.00, -8.56, 
+                                    -9.12, -9.69, -10.27, -10.85, -11.43, 
+                                    -12.01))*np.pi*a0**2*1e17
+        
+        self.Q_p_3p = 10**np.array((-2.18, -1.85, -1.55, -1.30, -1.08,
+                                    -0.91, -0.79, -0.72, -0.70, -0.74,
+                                    -0.82, -0.97, -1.16, -1.30, -1.70,
+                                    -2.04, -2.43, -2.85, -3.31, -3.81, 
+                                    -4.33, -4.88, -5.46, -6.05, -6.66,
+                                    -7.28, -7.91, -8.55, -9.20, -9.86, 
+                                    -10.53, -11.20, -11.87, -12.55, -13.23,
+                                    -13.91))*np.pi*a0**2*1e17
+        self.Q_p_3d = 10**np.array((-3.43, -3.02, -2.65, -2.31, -2.03, 
+                                    -1.80, -1.63, -1.52, -1.48, -1.50, 
+                                    -1.58, -1.74, -1.96, -2.25, -2.59,
+                                    -2.99, -3.44, -3.94, -4.49, -5.07,
+                                    -5.68, -6.32, -6.98, -7.67, -8.37, 
+                                    -9.09, -9.82, -10.56, -11.31, -12.06, 
+                                    -12.83, -13.60, -14.37, -15.15, -15.92,
+                                    -16.71))*np.pi*a0**2*1e17
+        self.Q_p3 = self.Q_p_3s + self.Q_p_3p + self.Q_p_3d
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
