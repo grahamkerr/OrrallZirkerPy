@@ -887,35 +887,35 @@ def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0,
     return pfit_vals
 
 
-def cs_chebfit(energy, csec, emin = -100.0, emax=-100.0, 
-               order = 3, log10E=False, log10Q = False):
+# def cs_chebfit(energy, csec, emin = -100.0, emax=-100.0, 
+#                order = 3, log10E=False, log10Q = False):
 
-    if emax == -100.0:
-        emax = energy[-1]
-    if emin == -100.0:
-        emin = energy[0]
+#     if emax == -100.0:
+#         emax = energy[-1]
+#     if emin == -100.0:
+#         emin = energy[0]
 
-    eind1 = np.where(energy >= emin)[0][0]
-    eind2 = np.where(energy <= emax)[0][-1]+1
+#     eind1 = np.where(energy >= emin)[0][0]
+#     eind2 = np.where(energy <= emax)[0][-1]+1
 
-    if log10E == True:
-        energy = np.log10(energy[eind1:eind2])
-    else:
-        energy = energy[eind1:eind2]
+#     if log10E == True:
+#         energy = np.log10(energy[eind1:eind2])
+#     else:
+#         energy = energy[eind1:eind2]
 
-    if log10Q == True:
-        csec = np.log10(csec[eind1:eind2])
-    else:
-        csec = csec[eind1:eind2]
+#     if log10Q == True:
+#         csec = np.log10(csec[eind1:eind2])
+#     else:
+#         csec = csec[eind1:eind2]
 
 
-    # x = (np.log(energy/emin) - np.log(emax/energy))/np.log(emax/emin)
+#     # x = (np.log(energy/emin) - np.log(emax/energy))/np.log(emax/emin)
 
-    cfit = Cheb.fit(energy,csec,order)
-    # cfit = Cheb.fit(x, csec, order)
-    cfit_vals = Cheb(cfit.convert().coef)
+#     cfit = Cheb.fit(energy,csec,order)
+#     # cfit = Cheb.fit(x, csec, order)
+#     cfit_vals = Cheb(cfit.convert().coef)
 
-    return cfit_vals
+#     return cfit_vals
 
 
 
@@ -972,6 +972,36 @@ def cs_expfit(energy, csec, emin = -100.0, emax = -100.0,
     return popt_exp, pcov_exp
 
 
+def cs_chebfit(energy, csec, emin = -100.0, emax = -100.0,
+                    deg = 8):
+    
+    if emax == -100.0:
+        emax = energy[-1]
+    if emin == -100.0:
+        emin = energy[0]
+
+    eind1 = np.where(energy >= emin)[0][0]
+    eind2 = np.where(energy <= emax)[0][-1]+1
+
+    energy = energy[eind1:eind2]
+
+    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
+
+    csec = csec[eind1:eind2]
+
+    # y0_guess = csec[0] 
+
+    # paramsguess = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    paramsguess = np.ones(deg+1)
+    popt_cheb, pcov_cheb=curve_fit(chebyshev_tofit, 
+                                   x, np.log(csec), 
+                                   p0 = paramsguess)
+
+    #yvals = OZpy.CrossSections.exponential_fn(xvals, 
+                                  # *popt_exp)
+
+    return popt_cheb, pcov_cheb
+
 def hyperbolic_fn(x, y0, b, b0):
     '''
     Hyperbolic decline curve equation
@@ -1007,3 +1037,70 @@ def exponential_fn(x, y0, b):
     """
     return y0*np.exp(-b*x)
  
+def chebyshev_fn(energy, coefs, deg, emin, emax):
+    
+    ## Turn to np array if an integer or float are provided
+    if type(energy) == int:
+        energy = np.array(energy)
+    if type(energy) == float:
+        energy = np.array(energy)
+    if type(energy) == tuple:
+        energy = np.array(energy)
+
+    nE = len(energy)
+   
+    ## The fitting variable
+    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
+
+    ## Cheb polynomials
+    tfn = np.zeros([nE,9], dtype = np.float64)
+    tfn[:,0] = x**0
+    tfn[:,1] = x
+    tfn[:,2] = 2*x**2 - 1
+    tfn[:,3] = 4*x**3 - 3*x
+    tfn[:,4] = 8*x**4 - 8*x**2 + 1
+    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
+    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
+    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
+    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
+
+    chebfn = coefs[0]/2*tfn[:,0]
+
+    for ind in range(1,deg):
+        chebfn+=coefs[ind]*tfn[:,ind]
+
+    return chebfn
+
+def chebyshev_tofit(x, *coefs):
+    
+    ## Turn to np array if an integer or float are provided
+    if type(x) == int:
+        x = np.array(x)
+    if type(x) == float:
+        x = np.array(x)
+    if type(x) == tuple:
+        x = np.array(x)
+
+    nE = len(x)
+    
+    ## Cheb polynomials
+    tfn = np.zeros([nE,9], dtype = np.float64)
+    tfn[:,0] = x**0
+    tfn[:,1] = x
+    tfn[:,2] = 2*x**2 - 1
+    tfn[:,3] = 4*x**3 - 3*x
+    tfn[:,4] = 8*x**4 - 8*x**2 + 1
+    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
+    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
+    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
+    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
+
+    chebfn = np.zeros([nE], dtype = np.float64)
+    
+    chebfn = coefs[0]/2 * tfn[:,0] 
+    for ind in range(1,len(coefs)):
+        chebfn+= coefs[ind]*tfn[:,ind]
+    
+
+    return chebfn
+        
