@@ -1,8 +1,10 @@
 import numpy as np 
 from numpy.polynomial.polynomial import Polynomial as Poly
-from numpy.polynomial.chebyshev import Chebyshev as Cheb
 from scipy.optimize import curve_fit
 
+################################################################################
+################################################################################
+################################################################################
 
 class CrossSec:
 
@@ -34,8 +36,9 @@ class CrossSec:
         self.energy = energy
         self.nE = len(self.energy)
 
-   
-    def cs_kerr_fit1(self):
+################################################################################
+
+    def cs_kerr_cheb(self):
         '''
         This function will calculate the cross-sections required 
         to compute the population of suprathermal neutral hydrogen,
@@ -57,8 +60,8 @@ class CrossSec:
         Q_p_2p -> charge exchange to 2p
 
 
-        These are 8-degree polynomial fits to Winters et al 2009 (1-100keV) 
-        and Belkic et al 1992 (125-8000) keV
+        These are 8-degree Chebyshev fits to Winters et al 2009 (1-100keV) 
+        and Belkic et al 1992 (125-8000) keV, so, Emin = 1, Emax = 8000.
 
         Parameters
         __________
@@ -77,8 +80,10 @@ class CrossSec:
         Notes
         ________
 
-        BW99 only computed the cross-sections required for Lyman alpha. 
-        For the Lyman beta or H-alpha problem we need additional rates.
+        Fits were done in linear (energy) - ln(cross-sec) space, 
+        with energy in keV and cross sec in 10^-17 cm^2
+        
+
 
         Graham Kerr
         July 2021
@@ -88,104 +93,108 @@ class CrossSec:
         # Some preliminary set up
         ########################################################################
 
-        
-        Q_p1 = np.zeros([self.nE],dtype = np.float64)
-        Q_p2 = np.zeros([self.nE],dtype = np.float64)
-        Q_p3 = np.zeros([self.nE],dtype = np.float64)
-        Q_p_2s = np.zeros([self.nE],dtype = np.float64)
-        Q_p_2p = np.zeros([self.nE],dtype = np.float64)
-        Q_p_3s = np.zeros([self.nE],dtype = np.float64)
-        Q_p_3p = np.zeros([self.nE],dtype = np.float64)
-        Q_p_3d = np.zeros([self.nE],dtype = np.float64)
+    
+        emin_cx = 1.0
+        emax_cx = 8000.0
 
         ########################################################################
-        # Go through each energy and calculate the cross section
+        # Calculate the cross sections from the coeff.
         ########################################################################
 
-        for ind in range(self.nE):
+        # for ind in range(self.nE):
 
-            ########
-            # Q_p1
-            ########
-            coefs = [2.22694265e+00,  2.19952462e-01, -2.61594140e+00,  4.88314799e+00,
-                     -4.06254721e+00,  1.49092387e+00, -2.50756210e-01,  1.43541589e-02,
-                     3.20664286e-04]
-            polfit = Poly(coefs)
+        ########
+        # Q_p1
+        ########
+        coefs_qp1 = np.array((-9.02130231e+00, -1.41956219e+01, -4.03526188e+00,  2.65162821e-01,
+                              4.63966058e-01, -1.41408151e-01, -7.16650392e-02,  7.50934329e-02,
+                              1.21348395e-03))
+        deg = len(coefs_qp1)
+        Q_p1 = np.exp(chebyshev_fn(self.energy, coefs_qp1, deg, emin_cx, emax_cx))
 
-            Q_p1[ind] = 10.00**(polfit(np.log10(self.energy[ind])))
-        
+        ########
+        # Q_p2
+        ########
+        coefs_qp2 = np.array((-13.33234177, -13.09534279,  -4.50454333,   0.37329088,
+                              0.73414779,  -0.27266491,  -0.14132532,   0.16552985,
+                              -0.02563817))
+        deg = len(coefs_qp2)
+        Q_p2 = np.exp(chebyshev_fn(self.energy, coefs_qp2, deg, emin_cx, emax_cx))
 
-            ########
-            # Q_p2
-            ########          
-            coefs = [ 3.52822513e-01,  1.64355656e+00, -7.98957810e+00,  1.55848788e+01,
-                      -1.33785243e+01,  5.69351983e+00, -1.28933603e+00,  1.48436556e-01,
-                      -6.77411207e-03]
-            polfit = Poly(coefs)
+        ########
+        # Q_p2s
+        ########
+        coefs_qp2s = np.array((-1.64201279e+01, -1.13951670e+01, -5.92106146e+00,  7.35532224e-01,
+                               7.21043358e-01, -3.94619891e-01, -5.07871953e-02,  1.43313562e-01,
+                               -1.24757704e-02))
+        deg = len(coefs_qp2s)
+        Q_p_2s = np.exp(chebyshev_fn(self.energy, coefs_qp2s, deg, emin_cx, emax_cx))
 
-            Q_p2[ind] = 10.00**(polfit(np.log10(self.energy[ind])))
+        ########
+        # Q_p2p
+        ########
+        coefs_qp2p = np.array((-16.63011227, -14.65902507,  -4.62838587,   0.49142988,
+                               0.68755281,  -0.15925478,  -0.10527213,   0.06216281,
+                               -0.0366277 ))
+        deg = len(coefs_qp2p)
+        Q_p_2p = np.exp(chebyshev_fn(self.energy, coefs_qp2p, deg, emin_cx, emax_cx))
 
-            ########
-            # Q_p_2s
-            ########  
-            coefs = [-1.33340389e+00,  1.81849443e+00, -3.20438221e+00,  8.73242213e+00,
-                     -8.72014392e+00,  3.83963229e+00, -8.43942678e-01,  8.84132749e-02,
-                     -3.29638626e-03]
-            polfit = Poly(coefs)
+        ########
+        # Q_p3
+        ########
+        coefs_qp3 = np.array((-1.65845503e+01, -1.20343070e+01, -5.05549945e+00,  6.46012371e-01,
+                               6.87680549e-01, -2.52531499e-01, -1.70099272e-01,  1.71261267e-01,
+                               2.32330065e-04))
+        deg = len(coefs_qp3)
+        Q_p3 = np.exp(chebyshev_fn(self.energy, coefs_qp3, deg, emin_cx, emax_cx))
 
-            Q_p_2s = 10.00**(polfit(np.log10(self.energy[ind])))
+        ########
+        # Q_p3s
+        ########
+        coefs_qp3s = np.array((-19.33429628, -10.19936388,  -5.86496749,   0.5161523 ,
+                               1.23253673,  -0.66462294,  -0.15508603,   0.36056999,
+                               -0.19231693))
+        deg = len(coefs_qp3s)
+        Q_p_3s = np.exp(chebyshev_fn(self.energy, coefs_qp3s, deg, emin_cx, emax_cx))
 
-            ########
-            # Q_p_2p
-            ########  
-            coefs = [ 3.53592513e-01,  1.01935273e+00, -5.00234216e+00,  1.03067093e+01,
-                      -9.73283938e+00,  4.61092269e+00, -1.20373119e+00,  1.67119555e-01,
-                      -9.67776975e-03]
-            polfit = Poly(coefs)
+        ########
+        # Q_p3p
+        ########
+        coefs_qp3p = np.array((-20.48185934, -13.05831177,  -5.49675648,   0.73823815,
+                               0.75441546,  -0.24984525,  -0.09987703,   0.10492206,
+                               -0.0594819 ))
+        deg = len(coefs_qp3p)
+        Q_p_3p = np.exp(chebyshev_fn(self.energy, coefs_qp3p, deg, emin_cx, emax_cx))
 
-            Q_p_2p = 10.00**(polfit(np.log10(self.energy[ind])))
+        ########
+        # Q_p3d
+        ########
+        coefs_qp3d = np.array((-2.36013894e+01, -1.41823641e+01, -5.04558039e+00,  1.07973772e+00,
+                               3.03491139e-01, -5.46681975e-02, -5.36399104e-02, -1.17651735e-01,
+                               2.03595395e-02))
+        deg = len(coefs_qp3d)
+        Q_p_3d = np.exp(chebyshev_fn(self.energy, coefs_qp3d, deg, emin_cx, emax_cx))
 
-            ########
-            # Q_p3
-            ########          
-            coefs = [-1.32954426e+00,  3.24641453e+00, -7.92551893e+00,  1.29838478e+01,
-                     -1.00084043e+01,  3.65608690e+00, -6.39881984e-01,  4.31933952e-02,
-                      6.15522961e-05]
-            polfit = Poly(coefs)
 
-            Q_p3[ind] = 10.00**(polfit(np.log10(self.energy[ind])))
+        #######
+        # Q_1pP
+        #######
+        emin = 1.25
+        emax = 1500
+        coefs_q1pP_1 = np.array((1.40779597,  1.80739461, -1.42774774,  0.01782048,  0.35604087,
+                                 -0.06343798, -0.10090822,  0.03552779,  0.03316916))
+        coefs_q1pP_2 = np.array((2.76008009, -0.82241237))
+        deg = len(coefs_q1pP_1)
+        polfit_2 = Poly(coefs_q1pP_2)
+        if np.max(self.energy > 1500):
+            eind1 = np.where(self.energy <= 1500)[0][-1]
+            Q_1pP_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q1pP_1, deg, emin, emax))
+            Q_1pP_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+            Q_1pP = np.concatenate([Q_1pP_tmp1,Q_1pP_tmp2])
+        else: 
+            Q_1pP = np.exp(chebyshev_fn(self.energy, coefs_q1pP_1, deg, emin, emax))
 
-            ########
-            # Q_p_3s
-            ########  
-            coefs = [-2.69721960e+00,  4.50212633e+00, -2.35886088e+01,  5.14218349e+01,
-                     -4.86592762e+01,  2.37268261e+01, -6.34063602e+00,  8.86287912e-01,
-                     -5.08139865e-02]
-            polfit = Poly(coefs)
-
-            Q_p_3s = 10.00**(polfit(np.log10(self.energy[ind])))
-
-            ########
-            # Q_p_3p
-            ########  
-            coefs = [-1.59664156e+00,  2.62533789e+00, -7.72743744e+00,  1.58848880e+01,
-                     -1.51939117e+01,  7.35580352e+00, -1.95091889e+00,  2.72419499e-01,
-                     -1.57163068e-02]
-            polfit = Poly(coefs)
-
-            Q_p_3p = 10.00**(polfit(np.log10(self.energy[ind])))
-
-            ########
-            # Q_p_3d
-            ########  
-            coefs = [-1.66661245e+00,  1.20858918e+00,  4.85307359e+00, -1.06404583e+01,
-                      8.64651507e+00, -3.83846950e+00,  9.33555588e-01, -1.14318171e-01,
-                      5.37941440e-03]
-            polfit = Poly(coefs)
-
-            Q_p_3d = 10.00**(polfit(np.log10(self.energy[ind])))
-
-        class cs_kerr_fit1_out:
+        class cs_kerr_cheb_out:
             def __init__(selfout):
                 selfout.Q_p1 = Q_p1
                 selfout.Q_p2 = Q_p2
@@ -195,12 +204,191 @@ class CrossSec:
                 selfout.Q_p_3s = Q_p_3s
                 selfout.Q_p_3p = Q_p_3p
                 selfout.Q_p_3d = Q_p_3d
+                selfout.Q_1pP = Q_1pP
                 selfout.energy = self.energy
                 selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
-        out = cs_kerr_fit1_out()
+        out = cs_kerr_cheb_out()
 
         return out
+
+################################################################################
+  
+    def cs_kerr_poly(self):
+        '''
+        This function will calculate the cross-sections required 
+        to compute the population of suprathermal neutral hydrogen,
+        given an energy E in keV. 
+
+        Those cross sections are: 
+
+        Q_pj -- the charge exchange cs from protons to H level j = 1,2
+
+        The following cross sections are computed:
+
+        Q_p1 -> charge exchange to n=1 (ground)
+        Q_p2 -> charge exchange to n=2 
+        Q_p3 -> charge exchange to n=3
+        Q_p_3s -> charge exchange to 3s
+        Q_p_3p -> charge exchange to 3p
+        Q_p_3d -> charge exchange to 3d
+        Q_p_2s -> charge exchange to 2s
+        Q_p_2p -> charge exchange to 2p
+
+
+        CX are are 8-degree polynomial fits to Winters et al 2009 (1-100keV) 
+        and Belkic et al 1992 (125-8000) keV
+
+        Q_1pP is 8-deg polynomial fit to Shah et al 1981,1987a,1998, covering
+        the range 1.25-1500 keV. Since the fit is in log-log space a straight line
+        is fit between 500-1500 keV, and any energy > 1500 keV is extrapolated as 
+        a linear decay following the 8-deg polynomial fit
+
+        Parameters
+        __________
+
+        energy : float
+            The energy at which to compute the cross sections, in keV
+
+
+        Outputs
+        _________
+
+        cross_secs : 
+            An object containing each cross section, in 10^-17 cm^2 
+
+
+        Notes
+        ________
+
+        Fits were done with energy in keV, cross. sec in [10^-17 cm^2],
+        in log-log space.
+
+        Graham Kerr
+        July 2021
+
+        '''
+        ########################################################################
+        # Calculate the cross sections from the fit coefficients
+        ########################################################################
+
+        ########
+        # Q_p1
+        ########
+        coefs_qp1 = [2.22694265e+00,  2.19952462e-01, -2.61594140e+00,  4.88314799e+00,
+                 -4.06254721e+00,  1.49092387e+00, -2.50756210e-01,  1.43541589e-02,
+                 3.20664286e-04]
+        polfit = Poly(coefs_qp1)
+
+        Q_p1 = 10.00**(polfit(np.log10(self.energy)))
+
+
+        ########
+        # Q_p2
+        ######## 
+        coefs_qp2 = [ 3.52822513e-01,  1.64355656e+00, -7.98957810e+00,  1.55848788e+01,
+                  -1.33785243e+01,  5.69351983e+00, -1.28933603e+00,  1.48436556e-01,
+                  -6.77411207e-03]
+        polfit = Poly(coefs_qp2)
+
+        Q_p2 = 10.00**(polfit(np.log10(self.energy)))
+
+        
+        ########
+        # Q_p_2s
+        ########  
+        coefs_qp2s = [-1.33340389e+00,  1.81849443e+00, -3.20438221e+00,  8.73242213e+00,
+                 -8.72014392e+00,  3.83963229e+00, -8.43942678e-01,  8.84132749e-02,
+                 -3.29638626e-03]
+        polfit = Poly(coefs_qp2s)
+
+        Q_p_2s = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_p_2p
+        ########  
+        coefs_qp2p = [ 3.53592513e-01,  1.01935273e+00, -5.00234216e+00,  1.03067093e+01,
+                  -9.73283938e+00,  4.61092269e+00, -1.20373119e+00,  1.67119555e-01,
+                  -9.67776975e-03]
+        polfit = Poly(coefs_qp2p)
+
+        Q_p_2p = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_p3
+        ########          
+        coefs_qp3s = [-1.32954426e+00,  3.24641453e+00, -7.92551893e+00,  1.29838478e+01,
+                 -1.00084043e+01,  3.65608690e+00, -6.39881984e-01,  4.31933952e-02,
+                  6.15522961e-05]
+        polfit = Poly(coefs_qp3s)
+
+        Q_p3 = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_p_3s
+        ########  
+        coefs_qp3s = [-2.69721960e+00,  4.50212633e+00, -2.35886088e+01,  5.14218349e+01,
+                 -4.86592762e+01,  2.37268261e+01, -6.34063602e+00,  8.86287912e-01,
+                 -5.08139865e-02]
+        polfit = Poly(coefs_qp3s)
+
+        Q_p_3s = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_p_3p
+        ########  
+        coefs_qp3p = [-1.59664156e+00,  2.62533789e+00, -7.72743744e+00,  1.58848880e+01,
+                 -1.51939117e+01,  7.35580352e+00, -1.95091889e+00,  2.72419499e-01,
+                 -1.57163068e-02]
+        polfit = Poly(coefs_qp3p)
+
+        Q_p_3p = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_p_3d
+        ########  
+        coefs_qp3d = [-1.66661245e+00,  1.20858918e+00,  4.85307359e+00, -1.06404583e+01,
+                  8.64651507e+00, -3.83846950e+00,  9.33555588e-01, -1.14318171e-01,
+                  5.37941440e-03]
+        polfit = Poly(coefs_qp3d)
+
+        Q_p_3d = 10.00**(polfit(np.log10(self.energy)))
+
+        #######
+        # Q_1pP
+        #######
+        coefs_q1pP_1 = np.array((-1.55346521,  1.3669883 ,  1.85671678, -5.69724539,  9.64059189,
+                                 -8.1251122 ,  3.44611815, -0.71654207,  0.05840993))
+        coefs_q1pP_2 = np.array((2.76008009, -0.82241237))
+        polfit_1 = Poly(coefs_q1pP_1)
+        polfit_2 = Poly(coefs_q1pP_2)
+        if np.max(self.energy > 1500):
+            eind1 = np.where(self.energy <= 1500)[0][-1]
+            Q_1pP_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+            Q_1pP_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+            Q_1pP = np.concatenate([Q_1pP_tmp1,Q_1pP_tmp2])
+        else: 
+            Q_1pP = 10**(polfit_1(np.log10(self.energy)))
+
+        class cs_kerr_poly_out:
+            def __init__(selfout):
+                selfout.Q_p1 = Q_p1
+                selfout.Q_p2 = Q_p2
+                selfout.Q_p_2s = Q_p_2s
+                selfout.Q_p_2p = Q_p_2p
+                selfout.Q_p3 = Q_p3
+                selfout.Q_p_3s = Q_p_3s
+                selfout.Q_p_3p = Q_p_3p
+                selfout.Q_p_3d = Q_p_3d
+                selfout.Q_1pP = Q_1pP
+                selfout.energy = self.energy
+                selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+        out = cs_kerr_poly_out()
+
+        return out
+
+################################################################################
 
     def cs_bw99(self):
 
@@ -257,55 +445,30 @@ class CrossSec:
         '''
 
         ########################################################################
-        # Some preliminary set up
-        ########################################################################
-
-        ## Turn to list if an integer or float are provided
-        # if type(self.energy) == int:
-        #     self.energy = [self.energy]
-        # if type(self.energy) == float:
-        #     self.energy = [self.energy]
-
-        ## How many energies to calculate
-        # nE = len(self.energy)
-        
-        Q_p1 = np.zeros([self.nE],dtype = np.float64)
-        Q_p2 = np.zeros([self.nE],dtype = np.float64)
-        Q_1pP = np.zeros([self.nE],dtype = np.float64)
-        Q_1pH = np.zeros([self.nE],dtype = np.float64)
-        Q_1pE = np.zeros([self.nE],dtype = np.float64)
-        Q_12P = np.zeros([self.nE],dtype = np.float64)
-        Q_12H = np.zeros([self.nE],dtype = np.float64)
-        Q_12E = np.zeros([self.nE],dtype = np.float64)
-        Q_23E = np.zeros([self.nE],dtype = np.float64)
-
-
-
-        ########################################################################
         # Go through each energy and calculate the cross section
         ########################################################################
 
-        for ind in range(self.nE):
+        # for ind in range(self.nE):
 
-            ########
-            # Q_p1
-            ########
-            Q_p1[ind] = 10.00**(-13.69 - 2.03*np.log10(self.energy[ind]) +
-                                         1.39*np.log10(self.energy[ind])**2.0 -
-                                         0.827*np.log10(self.energy[ind])**3.0 +
-                                         0.0988*np.log10(self.energy[ind])**4.0 
-                                )
+        ########
+        # Q_p1
+        ########
+        Q_p1 = 10.00**(-13.69 - 2.03*np.log10(self.energy) +
+                                     1.39*np.log10(self.energy)**2.0 -
+                                     0.827*np.log10(self.energy)**3.0 +
+                                     0.0988*np.log10(self.energy)**4.0 
+                            )
 
-            ########
-            # Q_p2
-            ########          
-            Q_p2[ind] = 10.00**(-19.02 + 5.59*np.log10(self.energy[ind]) -
-                                         2.70*np.log10(self.energy[ind])**2.0 -
-                                         0.00586*np.log10(self.energy[ind])**3.0 +
-                                         0.0400*np.log10(self.energy[ind])**4.0 
-                                )
+        ########
+        # Q_p2
+        ########          
+        Q_p2 = 10.00**(-19.02 + 5.59*np.log10(self.energy) -
+                                     2.70*np.log10(self.energy)**2.0 -
+                                     0.00586*np.log10(self.energy)**3.0 +
+                                     0.0400*np.log10(self.energy)**4.0 
+                            )
 
-    
+
         class cs_bw99_out:
             def __init__(selfout):
                 selfout.Q_p1 = Q_p1/1e-17
@@ -316,6 +479,8 @@ class CrossSec:
         out = cs_bw99_out()
 
         return out
+
+################################################################################
 
     def cs_fang95(self):
 
@@ -553,6 +718,9 @@ class CrossSec:
 
         return out
 
+################################################################################
+################################################################################
+################################################################################
 
 class cs_cheshire70:
 
@@ -587,6 +755,9 @@ class cs_cheshire70:
         self.Q_p2 = self.Q_p_2s + self.Q_p_2p
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
+################################################################################
+################################################################################
+################################################################################
 
 class cs_ludde82:
 
@@ -614,6 +785,10 @@ class cs_ludde82:
         self.Q_p2 = np.array((2.24, 2.99, 3.01, 3.44, 4.35, 6.20, 6.26, 4.03, 1.40))
         self.Q_p3 = np.array((0.02, 0.03, 0.13, 0.50, 1.75, 0.54, 1.21, 1.77, 0.18))
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+################################################################################
+################################################################################
+################################################################################
 
 
 class cs_shakeshaft78:
@@ -657,7 +832,11 @@ class cs_shakeshaft78:
         self.Q_p3 = self.Q_p_3s + self.Q_p_3p0 + self.Q_p_3p1 + self.Q_p_3d0 + self.Q_p_3d1 + self.Q_p_3d2
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
-    
+
+################################################################################
+################################################################################
+################################################################################
+
 
 class cs_bates53:
 
@@ -736,6 +915,9 @@ class cs_bates53:
         self.Q_p3 = self.Q_p_3s + self.Q_p_3p + self.Q_p_3d
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
+################################################################################
+################################################################################
+################################################################################
 
 class cs_winter09:
 
@@ -771,6 +953,10 @@ class cs_winter09:
         self.Q_p_3d = np.array((0.020, 0.062, 0.120, 0.206, 0.354, 0.30, 0.17, 0.07, 0.01, 0.002, 0.001))
         self.Q_p3 = self.Q_p_3s + self.Q_p_3p + self.Q_p_3d
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+################################################################################
+################################################################################
+################################################################################
 
 class cs_belkic92:
 
@@ -822,6 +1008,9 @@ class cs_belkic92:
                               1.29e-25, 1.31e-26, 2.55e-27, 7.17e-28, 2.53e-28, 1.05e-28, 4.89e-29, 2.49e-29, 1.36e-29))*1e17
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
+################################################################################
+################################################################################
+################################################################################
 
 class cs_tselia12:
     '''
@@ -858,6 +1047,81 @@ class cs_tselia12:
         self.Q_p3 = self.Q_p_3s + self.Q_p_3p0 + self.Q_p_3p1 + self.Q_p_3d0 + self.Q_p_3d1 + self.Q_p_3d2
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
+################################################################################
+################################################################################
+################################################################################
+
+class cs_shah98:
+
+    '''
+    This class holds the energy and cross sections for H(1s)+p -> p + p + e 
+    from Shah et al 1998 J. Phys. At. Mol. Opt. Phys 31.
+   
+    Q_1pP 
+ 
+    Energy range  1.25 -- 9 keV
+
+    '''
+    def __init__(self):
+        self.energy = np.array((1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0))
+        self.Q_1pP = np.array((0.39, 0.55, 0.75, 1.38, 1.68, 3.2, 4.7, 5.8, 9.6, 11.3, 15.5))*0.1
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+################################################################################
+################################################################################
+################################################################################
+
+class cs_shah87a:
+
+    '''
+    This class holds the energy and cross sections for H(1s)+p -> p + p + e 
+    from Shah et al 1987a J. Phys. B: Atom. Mol. Phys 20.
+   
+    Q_1pP 
+ 
+    Energy range  9 -- 75 keV
+
+    '''
+    def __init__(self):
+        self.energy = np.array((9.4, 11.4, 13.4, 15.4, 18.4, 22.4, 26.4, 32.4, 38.4, 48.4, 60.0, 75.0))
+        self.Q_1pP = np.array((0.162, 0.245, 0.331, 0.438, 0.569, 0.779, 1.053, 1.227, 1.440, 1.300, 1.383, 1.291))*10.0
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+ 
+
+################################################################################
+################################################################################
+################################################################################
+
+class cs_shah81:
+
+    '''
+    This class holds the energy and cross sections for H(1s)+p -> p + p + e 
+    from Shah & Gilbody 1981 J. Phys. B: Atom. Mol. Phys 14.
+   
+    Q_1pP 
+ 
+    Energy range  38 -- 1500 keV
+
+    '''
+    def __init__(self):
+        self.energy = np.array(( 38,   45,   54,   67,   80,  100,  120,   
+                                140,        160,        180,  200,  230,  
+                                260,  300,  350,  400,  450,  500,  550,  600,
+                                700,  800,  900, 1000, 1150, 1300,
+                               1500))
+        self.Q_1pP = np.array((13.69, 13.99, 14.04, 13.42, 12.80, 11.16, 10.09, 
+                                8.98,         8.27,         7.60,  7.07,  6.25,
+                                5.80,  5.31,  4.61,  4.10,  3.68,  3.38,  3.19,
+                                3.04,  2.64,  2.38,  2.18,  1.97,  1.75,  
+                                1.58,  1.38))
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+################################################################################
+################################################################################
+################################################################################
+
 
 def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0, 
                order = 3, log10E=False, log10Q = False):
@@ -886,38 +1150,9 @@ def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0,
 
     return pfit_vals
 
-
-# def cs_chebfit(energy, csec, emin = -100.0, emax=-100.0, 
-#                order = 3, log10E=False, log10Q = False):
-
-#     if emax == -100.0:
-#         emax = energy[-1]
-#     if emin == -100.0:
-#         emin = energy[0]
-
-#     eind1 = np.where(energy >= emin)[0][0]
-#     eind2 = np.where(energy <= emax)[0][-1]+1
-
-#     if log10E == True:
-#         energy = np.log10(energy[eind1:eind2])
-#     else:
-#         energy = energy[eind1:eind2]
-
-#     if log10Q == True:
-#         csec = np.log10(csec[eind1:eind2])
-#     else:
-#         csec = csec[eind1:eind2]
-
-
-#     # x = (np.log(energy/emin) - np.log(emax/energy))/np.log(emax/emin)
-
-#     cfit = Cheb.fit(energy,csec,order)
-#     # cfit = Cheb.fit(x, csec, order)
-#     cfit_vals = Cheb(cfit.convert().coef)
-
-#     return cfit_vals
-
-
+################################################################################
+################################################################################
+################################################################################
 
 def cs_hyberbolfit(energy, csec, emin = -100.0, emax = -100.0,
                    boundsin = [0, 1.1, 0, 1, 0, np.inf]):
@@ -945,6 +1180,10 @@ def cs_hyberbolfit(energy, csec, emin = -100.0, emax = -100.0,
 
     return popt_hyp, pcov_hyp
 
+################################################################################
+################################################################################
+################################################################################
+
 def cs_expfit(energy, csec, emin = -100.0, emax = -100.0,
               boundsin = [0.5,2.5,-10,10]):
     
@@ -970,6 +1209,10 @@ def cs_expfit(energy, csec, emin = -100.0, emax = -100.0,
                                   # *popt_exp)
 
     return popt_exp, pcov_exp
+
+################################################################################
+################################################################################
+################################################################################
 
 
 def cs_chebfit(energy, csec, emin = -100.0, emax = -100.0,
@@ -1002,6 +1245,10 @@ def cs_chebfit(energy, csec, emin = -100.0, emax = -100.0,
 
     return popt_cheb, pcov_cheb
 
+################################################################################
+################################################################################
+################################################################################
+
 def hyperbolic_fn(x, y0, b, b0):
     '''
     Hyperbolic decline curve equation
@@ -1020,6 +1267,9 @@ def hyperbolic_fn(x, y0, b, b0):
     '''
     return y0/((1.0+b*b0*x)**(1.0/b))
 
+################################################################################
+################################################################################
+################################################################################
 
 def exponential_fn(x, y0, b):
     """
@@ -1037,6 +1287,10 @@ def exponential_fn(x, y0, b):
     """
     return y0*np.exp(-b*x)
  
+################################################################################
+################################################################################
+################################################################################
+
 def chebyshev_fn(energy, coefs, deg, emin, emax):
     
     ## Turn to np array if an integer or float are provided
@@ -1071,6 +1325,10 @@ def chebyshev_fn(energy, coefs, deg, emin, emax):
 
     return chebfn
 
+################################################################################
+################################################################################
+################################################################################
+
 def chebyshev_tofit(x, *coefs):
     
     ## Turn to np array if an integer or float are provided
@@ -1103,4 +1361,7 @@ def chebyshev_tofit(x, *coefs):
     
 
     return chebfn
-        
+  
+################################################################################
+################################################################################
+################################################################################
