@@ -9,7 +9,46 @@ from scipy.optimize import curve_fit
 class CrossSec:
 
     '''
-    This class takes a projectile energy, either a single value or a list, 
+
+    Inputs
+    _______
+
+    energy -- projectile energy in keV (single value or array)
+
+    Methods
+    _______
+     
+    The methods attached to this class take the input energy and return various 
+    cross sections (see each method for a comprehensive list). Methods are:
+
+        kerr_fit_poly -- Mostly 8-degree polynomial fits to the underlying data 
+                          held in CrossSections.py. The higher energy ranges are 
+                          fit with straight lines in logE-logQ space to extrapolate 
+                          past the underlying data (use with caution). 
+                          Also includes several functional forms from the IAEA Vol 4 
+                          (Janev et al 1993).
+        kerr_fit_cheb -- Mostly 8-degree Chebyshev fits to the underlying data 
+                          held in CrossSections.py. The higher energy ranges are 
+                          fit with straight lines in logE-logQ space to extrapolate 
+                          past the underlying data (use with caution). 
+                          Also includes several functional forms from the IAEA Vol 4 
+                          (Janev et al 1993).
+        fang95 -- The fits from Fang, Feautrier & Henoux et al 1995 A&A 297, 854. 
+                  Fang et al 1995 did not detail the energy bounds of the fits, so 
+                  use these with caution. They go negative in lots of places at 
+                  100 keV (or much lower for electron impacts).
+        bw99 -- The fits from Brosius & Woodgate 1999, ApJ 514. These fits use older data
+                so there are some big differences between the fits to more modern data in 
+                kerr_fit_XXXX
+
+        Each of these outputs an object with energy in keV and cross sections in 10^-17 cm^2.
+
+
+
+    Notes
+    ______
+
+    This class takes a projectile energy in keV, either a single value or a list, 
     and has various methods to compute cross sections of charge exchange or impact 
     excitation/ionisation interactions between that energetic particle with ambient 
     particles.
@@ -27,6 +66,8 @@ class CrossSec:
 
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
+
+
 
 
     '''
