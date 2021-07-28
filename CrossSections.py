@@ -67,7 +67,8 @@ class CrossSec:
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
 
-
+    Graham Kerr
+    July 2021
 
 
     '''
@@ -2718,7 +2719,7 @@ class cs_shah81:
     '''
     This class holds the energy and cross sections for H(1s)+p -> p + p + e 
     from Shah & Gilbody 1981 J. Phys. B: Atom. Mol. Phys 14.
-    https://ui.adsabs.harvard.edu/abs/1981JPhB...14.2831S/abstract
+    https://ui.adsabs.harvard.edu/abs/1981JPhB...14.2361S/abstract
 
     Q_1pP 
  
@@ -2746,7 +2747,37 @@ class cs_shah81:
 
 def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0, 
                order = 3, log10E=False, log10Q = False):
+    """
+    Performs a nth degree polynomial fit to the cross sections at certain energies
+    
+    INPUTS
+    ______
+    
+    energy -- the projectile energy in keV
+    csec  -- the cross sections in 10^-17 cm^2
+    emin -- the minimum energy at which to perform the fit 
+            [optional, defaults to energy[0]]
+    emax -- the maximum energy at which to perform the fit 
+            [optional, defaults to energy[-1]]
+    order -- the degree of the fits 
+              [optional, defaults to 3]
+    log10E -- perform the fit in log10 E space
+              [optional, defaults to False]
+    log10Q -- perform the fit in log10 Q space
+              [optional, defaults to True]
 
+    OUTPUTS
+    _______
+
+    The fitting results
+
+    NOTES
+    _____
+
+    Graham Kerr
+    July 2021
+    
+    """
     if emax == -100.0:
         emax = energy[-1]
     if emin == -100.0:
@@ -2770,6 +2801,265 @@ def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0,
     pfit_vals = Poly(pfit.convert().coef)    
 
     return pfit_vals
+
+
+
+################################################################################
+################################################################################
+################################################################################
+
+
+def cs_chebfit(energy, csec, emin = -100.0, emax = -100.0,
+                    deg = 8):
+    """
+    Performs a fit to the cross sections at certain energies, using Chebyshev 
+    polynomials (see methods below for the functional form)
+    
+    INPUTS
+    ______
+    
+    energy -- the projectile energy in keV
+    csec  -- the cross sections in 10^-17 cm^2
+    emin -- the minimum energy at which to perform the fit 
+            [optional, defaults to energy[0]]
+    emax -- the maximum energy at which to perform the fit 
+            [optional, defaults to energy[-1]]
+    deg -- the degree of the fits 
+           [optional, defaults to 8]
+
+    OUTPUTS
+    _______
+
+    The fitting coeficients and covariance matrix
+
+    NOTES
+    _____
+
+    The fits are done using the variable x (see below) and 
+    cross sections in natural log space (ln Q). 
+
+    Graham Kerr
+    July 2021
+
+    """
+    
+    if emax == -100.0:
+        emax = energy[-1]
+    if emin == -100.0:
+        emin = energy[0]
+
+    eind1 = np.where(energy >= emin)[0][0]
+    eind2 = np.where(energy <= emax)[0][-1]+1
+
+    energy = energy[eind1:eind2]
+
+    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
+
+    csec = csec[eind1:eind2]
+
+    # y0_guess = csec[0] 
+
+    # paramsguess = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    paramsguess = np.ones(deg+1)
+    popt_cheb, pcov_cheb=curve_fit(chebyshev_tofit, 
+                                   x, np.log(csec), 
+                                   p0 = paramsguess)
+
+    #yvals = OZpy.CrossSections.exponential_fn(xvals, 
+                                  # *popt_exp)
+
+    return popt_cheb, pcov_cheb
+
+ 
+################################################################################
+################################################################################
+################################################################################
+
+def chebyshev_fn(energy, coefs, deg, emin, emax):
+    """
+    Evaluates the Chebyshev function at energy E, given coeficients. 
+
+    Y = A_0 / 2 + Sigma_j [A_j * T(x)_j]
+
+    Where 
+    x is a variable containing the energy 
+          x = [{ln(energy) - ln(Emin)} - {ln(Emax) - ln(energy)}]/{ln(Emax) - ln(Emin)}
+          for Emin and Emax the minimum and maximum energy bounds for which the coefs 
+          are valid
+    T(x)_j are the j-th Chebyshev polynomials
+    A_j are coefficients 
+  
+    INPUTS
+    _______
+
+    energy -- the energy at which to evaluate the function, in keV
+    coefs -- the coeficients of the function (presumably from some fit)
+    deg -- the degree of the Chebyshev function 
+    emin -- the minimum energy at which the function coefs are valid
+    emax -- the maximum energy at which the function coefs are valid
+
+    OUTPUTS
+    _______
+
+    chebfn -- the function evaluated at energies provided. These are, 
+              in our case, ln(cross sections) for cross sections in 10^-17 cm^2
+
+    NOTES
+    ______
+
+    To be used to evalutate the cross sections using the coeficients from fitting
+    the data.
+
+    Graham Kerr
+    July 2021
+    """
+
+    ## Turn to np array if an integer or float are provided
+    if type(energy) == int:
+        energy = np.array(energy)
+    if type(energy) == float:
+        energy = np.array(energy)
+    if type(energy) == tuple:
+        energy = np.array(energy)
+
+    nE = len(energy)
+   
+    ## The fitting variable
+    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
+
+    ## Cheb polynomials
+    tfn = np.zeros([nE,9], dtype = np.float64)
+    tfn[:,0] = x**0
+    tfn[:,1] = x
+    tfn[:,2] = 2*x**2 - 1
+    tfn[:,3] = 4*x**3 - 3*x
+    tfn[:,4] = 8*x**4 - 8*x**2 + 1
+    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
+    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
+    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
+    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
+
+    chebfn = coefs[0]/2*tfn[:,0]
+
+    for ind in range(1,deg):
+        chebfn+=coefs[ind]*tfn[:,ind]
+
+    return chebfn
+
+################################################################################
+################################################################################
+################################################################################
+
+def chebyshev_tofit(x, *coefs):
+    """
+    Fits a function of the form
+
+    Y = A_0 / 2 + Sigma_j [A_j * T(x)_j]
+
+    Where 
+    x is a variable containing the energy 
+    T(x)_j are the j-th Chebyshev polynomials
+    A_j are coefficients
+
+    This is largely used as the function in the fitting routine above. A seperate
+    method can evaluate the Chebyshev fns given energy and coeficients. 
+
+    INPUTS
+    ______
+
+    x -- the values at which to evaluate the function 
+    coefs -- the coeficients of the function
+
+    OUTPUTS
+    _______
+
+    Y - the function evaluated at X 
+
+    NOTES
+    _____
+
+
+    Graham Kerr
+    July 2021
+
+    """
+    
+    ## Turn to np array if an integer or float are provided
+    if type(x) == int:
+        x = np.array(x)
+    if type(x) == float:
+        x = np.array(x)
+    if type(x) == tuple:
+        x = np.array(x)
+
+    nE = len(x)
+    
+    ## Cheb polynomials
+    tfn = np.zeros([nE,9], dtype = np.float64)
+    tfn[:,0] = x**0
+    tfn[:,1] = x
+    tfn[:,2] = 2*x**2 - 1
+    tfn[:,3] = 4*x**3 - 3*x
+    tfn[:,4] = 8*x**4 - 8*x**2 + 1
+    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
+    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
+    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
+    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
+
+    chebfn = np.zeros([nE], dtype = np.float64)
+    
+    chebfn = coefs[0]/2 * tfn[:,0] 
+    for ind in range(1,len(coefs)):
+        chebfn+= coefs[ind]*tfn[:,ind]
+    
+
+    return chebfn
+  
+################################################################################
+################################################################################
+################################################################################
+
+################################################################################
+################################################################################
+################################################################################
+
+def hyperbolic_fn(x, y0, b, b0):
+    '''
+    Hyperbolic decline curve equation
+    Arguments:
+        x: Float. 
+           Energy, usually in keV
+        y0: Float. 
+            Initial value of y at start of curve.
+        b: Float. 
+            Hyperbolic decline constant
+        b0: Float. 
+            Nominal decline rate at time x=0
+    Output: 
+        q: Float.
+           The value of the function at value x
+    '''
+    return y0/((1.0+b*b0*x)**(1.0/b))
+
+################################################################################
+################################################################################
+################################################################################
+
+def exponential_fn(x, y0, b):
+    """
+    Exponential decline curve equation
+    Arguments:
+         x: Float. 
+           Energy, usually in keV
+        y0: Float. 
+            Initial value of y at start of curve.
+        b: Float. 
+            Decline constant
+    Output: 
+        q: Float.
+           The value of the function at value x
+    """
+    return y0*np.exp(-b*x)
 
 ################################################################################
 ################################################################################
@@ -2830,159 +3120,3 @@ def cs_expfit(energy, csec, emin = -100.0, emax = -100.0,
                                   # *popt_exp)
 
     return popt_exp, pcov_exp
-
-################################################################################
-################################################################################
-################################################################################
-
-
-def cs_chebfit(energy, csec, emin = -100.0, emax = -100.0,
-                    deg = 8):
-    
-    if emax == -100.0:
-        emax = energy[-1]
-    if emin == -100.0:
-        emin = energy[0]
-
-    eind1 = np.where(energy >= emin)[0][0]
-    eind2 = np.where(energy <= emax)[0][-1]+1
-
-    energy = energy[eind1:eind2]
-
-    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
-
-    csec = csec[eind1:eind2]
-
-    # y0_guess = csec[0] 
-
-    # paramsguess = [1, 1, 1, 1, 1, 1, 1, 1, 1]
-    paramsguess = np.ones(deg+1)
-    popt_cheb, pcov_cheb=curve_fit(chebyshev_tofit, 
-                                   x, np.log(csec), 
-                                   p0 = paramsguess)
-
-    #yvals = OZpy.CrossSections.exponential_fn(xvals, 
-                                  # *popt_exp)
-
-    return popt_cheb, pcov_cheb
-
-################################################################################
-################################################################################
-################################################################################
-
-def hyperbolic_fn(x, y0, b, b0):
-    '''
-    Hyperbolic decline curve equation
-    Arguments:
-        x: Float. 
-           Energy, usually in keV
-        y0: Float. 
-            Initial value of y at start of curve.
-        b: Float. 
-            Hyperbolic decline constant
-        b0: Float. 
-            Nominal decline rate at time x=0
-    Output: 
-        q: Float.
-           The value of the function at value x
-    '''
-    return y0/((1.0+b*b0*x)**(1.0/b))
-
-################################################################################
-################################################################################
-################################################################################
-
-def exponential_fn(x, y0, b):
-    """
-    Exponential decline curve equation
-    Arguments:
-         x: Float. 
-           Energy, usually in keV
-        y0: Float. 
-            Initial value of y at start of curve.
-        b: Float. 
-            Decline constant
-    Output: 
-        q: Float.
-           The value of the function at value x
-    """
-    return y0*np.exp(-b*x)
- 
-################################################################################
-################################################################################
-################################################################################
-
-def chebyshev_fn(energy, coefs, deg, emin, emax):
-    
-    ## Turn to np array if an integer or float are provided
-    if type(energy) == int:
-        energy = np.array(energy)
-    if type(energy) == float:
-        energy = np.array(energy)
-    if type(energy) == tuple:
-        energy = np.array(energy)
-
-    nE = len(energy)
-   
-    ## The fitting variable
-    x = ((np.log(energy)-np.log(emin)) - (np.log(emax) - np.log(energy)))/(np.log(emax) - np.log(emin))
-
-    ## Cheb polynomials
-    tfn = np.zeros([nE,9], dtype = np.float64)
-    tfn[:,0] = x**0
-    tfn[:,1] = x
-    tfn[:,2] = 2*x**2 - 1
-    tfn[:,3] = 4*x**3 - 3*x
-    tfn[:,4] = 8*x**4 - 8*x**2 + 1
-    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
-    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
-    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
-    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
-
-    chebfn = coefs[0]/2*tfn[:,0]
-
-    for ind in range(1,deg):
-        chebfn+=coefs[ind]*tfn[:,ind]
-
-    return chebfn
-
-################################################################################
-################################################################################
-################################################################################
-
-def chebyshev_tofit(x, *coefs):
-    
-    ## Turn to np array if an integer or float are provided
-    if type(x) == int:
-        x = np.array(x)
-    if type(x) == float:
-        x = np.array(x)
-    if type(x) == tuple:
-        x = np.array(x)
-
-    nE = len(x)
-    
-    ## Cheb polynomials
-    tfn = np.zeros([nE,9], dtype = np.float64)
-    tfn[:,0] = x**0
-    tfn[:,1] = x
-    tfn[:,2] = 2*x**2 - 1
-    tfn[:,3] = 4*x**3 - 3*x
-    tfn[:,4] = 8*x**4 - 8*x**2 + 1
-    tfn[:,5] = 16*x**5 - 20*x**3 + 5*x
-    tfn[:,6] = 32*x**6 - 48*x**4 + 28*x**2 - 1
-    tfn[:,7] = 64*x**7 - 112*x**5 + 56*x**3 - 7*x
-    tfn[:,8] = 128*x**8 - 256*x**6 + 160*x**4 - 32*x**2 + 1
-
-    chebfn = np.zeros([nE], dtype = np.float64)
-    
-    chebfn = coefs[0]/2 * tfn[:,0] 
-    for ind in range(1,len(coefs)):
-        chebfn+= coefs[ind]*tfn[:,ind]
-    
-
-    return chebfn
-  
-################################################################################
-################################################################################
-################################################################################
