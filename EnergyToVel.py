@@ -8,7 +8,7 @@ def energy2vel(energy, particle = 'proton'):
     A function to return the particle velocity in cm/s, given an 
     energy in keV.
    
-	Inputs
+    Inputs
     _______
 
     energy -- [float] 
@@ -32,10 +32,10 @@ def energy2vel(energy, particle = 'proton'):
     effect we assume the speed of the energetic neutral hydrogen particle is
     the same as the proton from which is was created via charge exchange. 
 
-	Graham Kerr
-	July 2021
+    Graham Kerr
+    July 2021
 
-	"""
+    """
 	########################################################################
     # Some preliminary set up
     ########################################################################

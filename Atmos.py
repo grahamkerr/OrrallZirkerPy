@@ -1,6 +1,6 @@
 import numpy as np
 
-class ambientpops:
+class AmbientPops:
     """
      
     Holds the ambient number densities of neutral hydrogen,
@@ -8,7 +8,7 @@ class ambientpops:
     along with the collisional cross sections to compute the 
     populations of suprathermal particles.
    
-	Inputs
+    Inputs
     _______
 
     nHyd -- Hydrogen number density [cm^-3]
@@ -30,10 +30,10 @@ class ambientpops:
 
     An object with each population density in cm^-3
 
-	Graham Kerr
-	July 2021
+    Graham Kerr
+    July 2021
 
-	"""
+    """
 	
     def __init__(self, nHyd=0, nElec=0, nProt=0, height = 0, times = 0):
     
@@ -113,3 +113,37 @@ class ambientpops:
             self.time = 0
             self.ndims = 0
             self.units = 'number densities in [cm^-3]'
+
+
+class SuprathermalProtons:
+    """
+     
+    Holds the properties of the suprathermal protons present
+    in the simulation. 
+   
+    Inputs
+    _______
+
+           -- energy grid
+           -- mu grid (can be ommitted if mu is not resolved)
+           -- particle distribution
+    height -- Height in [cm]
+    time  -- Simulation time in seconds (cam be omitted)
+
+    These can be either 
+    1) single values (i.e. one depth point at one time),
+    2) 1D array of values (i.e. many depth points at one time)
+    3) 2D array of values where multiple depth points are defined
+       at multiple times. 
+    However, all three particle densities should have the same dimensions,
+    and a warning message will display if this is not the case.
+
+    Outputs
+    _______
+
+    An object with each population density in cm^-3
+
+    Graham Kerr
+    July 2021
+
+    """
