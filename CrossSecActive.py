@@ -1,17 +1,157 @@
 import numpy as np 
 import OrrallZirkerPy as OZpy
 
-## These classes hold the cross sections to be used in the calculation 
-## of the Orrall-Zirker effect. 
+## The 'main' class CSecActive stores the cross sections in arrays of transition 
+## i -> j for use when solving the equations later.  
 
-## They utilise the fits held in CrossSections.py and returns a similar 
-## structure, but this script is designed to make it easy to swap in different
-## cross sections if required, without having to dig through lots of code. 
+## It does this from another object that utilises the fits held in CrossSections.py 
+## that basically collates the chosen cross sections from the various sources, 
 
-## There is one object for a 3 level Hydrogen atom, and one for a 2 level 
-## Hydrogen atom. 
+## It is *meant* to be straightforward to swap in different
+## cross sections if required, but we will see how that pans out.  
 
-class CrossSec_H3lev:
+## Currently there are two options: a 3 level Hydrogen atom (n = 1, 2, 3), and 
+## a 2 level Hydrogen atom (n = 1, 2). The arrays span [nLev+1, nLev+1] since we 
+## want to include the continuum also. **SHOULD I JUST CHANGE THIS TO INCLUDE THE
+## CONTINUUM FROM THE START?**
+
+## Graham Kerr
+## July 2021
+
+class CSecActive:
+
+
+    def __init__(self, energy, nLev = 3):
+        """
+
+        An object to store the cross sections in arrays [i,j,E], e.g. a 
+        transition lev 1 to lev 2 as a function of energy would be 
+        [0,1,:].
+
+        Inputs
+        ______
+
+        energy -- the energies at which to evaluate the cross sections. 
+                  float
+                  Can be either a single value or array. 
+        nLev   -- the number of bound levels in the atom/ion. 
+                  int
+                  optional; default nLev = 3
+
+        Outputs
+        _______
+
+        An object holding charge exchange (CX) and collisional excitation/ionisation
+        (protons: colP, hydrogen atoms: colH, electrons: colE) cross sections, in 
+        array format [i,j,E]. Dimensions are [nLev+1, nLev+1, nE].
+
+        NOTES
+        _____
+
+        Pulls the cross sections from CSec_ level objects (see below in this file).
+
+        Graham Kerr
+        July 2021
+
+        """
+    
+    ########################################################################
+    # Some preliminary set up
+    ########################################################################
+        ## Turn to np array if an integer or float are provided
+        if type(energy) == int:
+            energy = np.array(energy)
+        if type(energy) == float:
+            energy = np.array(energy)
+        if type(energy) == tuple:
+            energy = np.array(energy)
+
+        ## Some constants
+        if (nLev != 2) and (nLev !=3):
+        	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
+        	nLev = 3
+   
+
+        self.energy = energy
+        self.nE = len(self.energy)
+        self.nlev = nLev
+        self.nLev_plus_cont = nLev+1
+        self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+        if nLev == 3:
+            
+            ## Initialise the object
+            csecs = CSec_H3lev(energy)
+            cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+ 
+            ### Assign Charge Ex.
+            cs_CX[3,0,:] =  csecs.Q_p1      
+            cs_CX[3,1,:] =  csecs.Q_p2  
+            cs_CX[3,2,:] =  csecs.Q_p3  
+
+            #### Proton collisionsal excitation/ionisatiom
+            cs_colP[0,1,:] =  csecs.Q_12P
+            cs_colP[0,2,:] =  csecs.Q_13P
+            cs_colP[0,3,:] =  csecs.Q_1pP
+            cs_colP[1,2,:] =  csecs.Q_23P
+            cs_colP[1,3,:] =  csecs.Q_2pP
+            cs_colP[2,3,:] =  csecs.Q_3pP
+
+            #### Electron collisionsal excitation/ionisatiom
+            cs_colE[0,1,:] =  csecs.Q_12E
+            cs_colE[0,2,:] =  csecs.Q_13E
+            cs_colE[0,3,:] =  csecs.Q_1pE
+            cs_colE[1,2,:] =  csecs.Q_23E
+            cs_colE[1,3,:] =  csecs.Q_2pE
+            cs_colE[2,3,:] =  csecs.Q_3pE
+
+            #### Hydrogen collisionsal excitation/ionisatiom
+            cs_colH[0,1,:] =  csecs.Q_12H 
+            cs_colH[0,2,:] =  csecs.Q_13H
+            cs_colH[0,3,:] =  csecs.Q_1pH
+            # cs_colH[1,2,:] =  csecs.Q_23H 
+            # cs_colH[1,3,:] =  csecs.Q_2pH 
+            # cs_colH[2,3,:] =  csecs.Q_3pH 
+
+        elif nLev == 2:
+
+        	## Initialise the object
+            csecs = CSec_H2lev(energy)
+            cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+            cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+ 
+            ### Assign Charge Ex.
+            cs_CX[2,0,:] =  csecs.Q_p1      
+            cs_CX[2,1,:] =  csecs.Q_p2  
+
+            #### Proton collisionsal excitation/ionisatiom
+            cs_colP[0,1,:] =  csecs.Q_12P
+            cs_colP[0,2,:] =  csecs.Q_1pP
+            cs_colP[1,2,:] =  csecs.Q_2pP
+
+            #### Electron collisionsal excitation/ionisatiom
+            cs_colE[0,1,:] =  csecs.Q_12E
+            cs_colE[0,2,:] =  csecs.Q_12E
+            cs_colE[1,2,:] =  csecs.Q_2pE
+
+            #### Hydrogen collisionsal excitation/ionisatiom
+            cs_colH[0,1,:] =  csecs.Q_12H 
+            cs_colH[0,2,:] =  csecs.Q_1pH
+            # cs_colH[1,2,:] =  csecs.Q_2pH 
+
+                   
+        self.cs_CX = cs_CX
+        self.cs_colP = cs_colP
+        self.cs_colE = cs_colE
+        self.cs_colH = cs_colH
+
+
+class CSec_H3lev:
     """
      
     Hydrogen 3 level atom cross sections (n = 1, 2, 3) for 
@@ -168,7 +308,7 @@ class CrossSec_H3lev:
         self.Q_3pE = Q_3pE
 
 
-class CrossSec_H2lev:
+class CSec_H2lev:
     """
      
     Hydrogen 2 level atom cross sections (n = 1, 2) for 
