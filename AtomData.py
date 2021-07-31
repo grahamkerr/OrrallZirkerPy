@@ -1,23 +1,82 @@
 import numpy as np 
-import OrrallZirkerPy as OZpy
+# import OrrallZirkerPy as OZpy
+from OrrallZirkerPy.CrossSections import CrossSec
 
-## The 'main' class CSecActive stores the cross sections in arrays of transition 
-## i -> j for use when solving the equations later.  
+"""
+The 'main' class CSecActive stores the cross sections in arrays of transition 
+i -> j for use when solving the equations later.  
 
-## It does this from another object that utilises the fits held in CrossSections.py 
-## that basically collates the chosen cross sections from the various sources, 
+It does this from another object that utilises the fits held in CrossSections.py 
+that basically collates the chosen cross sections from the various sources, 
 
-## It is *meant* to be straightforward to swap in different
-## cross sections if required, but we will see how that pans out.  
+It is *meant* to be straightforward to swap in different
+cross sections if required, but we will see how that pans out.  
+ 
+Currently there are two options: a 3 level Hydrogen atom (n = 1, 2, 3), and 
+a 2 level Hydrogen atom (n = 1, 2). The arrays span [nLev+1, nLev+1] since we 
+want to include the continuum also. **SHOULD I JUST CHANGE THIS TO INCLUDE THE
+CONTINUUM FROM THE START?**
 
-## Currently there are two options: a 3 level Hydrogen atom (n = 1, 2, 3), and 
-## a 2 level Hydrogen atom (n = 1, 2). The arrays span [nLev+1, nLev+1] since we 
-## want to include the continuum also. **SHOULD I JUST CHANGE THIS TO INCLUDE THE
-## CONTINUUM FROM THE START?**
+Graham Kerr
+July 2021
 
-## Graham Kerr
-## July 2021
+"""
+class EinsteinA:
 
+    def __init__(self, nLev = 3):
+
+        """
+        An object to store the Einstein A values -- the inverse lifetimes
+        of each transition.
+
+        Inputs
+        ______
+
+        nlev -- int
+                Number of bound levels in the model atom
+                Optional, default = 3
+
+        Outputs
+        _______
+
+        An object containing the Aij values in /s
+
+        Notes
+        _____
+        
+        To fit the format of the collisional transitions, Aij is [nLev+1, nLev+1]
+        in size. However, most entries are zero. 
+
+        Graham Kerr
+        July 2021
+
+        """
+    ########################################################################
+    # Some preliminary set up
+    ########################################################################
+
+        ## Some param checks
+        if (nLev != 2) and (nLev !=3):
+        	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
+        	nLev = 3
+       
+        Aij = np.zeros([nLev+1,nLev+1],dtype = np.float64)
+
+    ########################################################################
+    # Assign the values
+    ########################################################################
+    
+        Aij[1,0] = 4.69800e8 ## Lyman alpha n = 2 --> n = 1
+    
+        if nLev == 3:
+            Aij[2,0] = 5.57503e8 ## Lyman beta n = 3 --> n = 1
+            Aij[2,1] = 4.41018e8 ## Balmer alpha n = 3 --> n = 2
+
+        self.nLev = nLev
+        self.Aij = Aij
+        
+
+ 
 class CSecActive:
 
 
@@ -66,7 +125,7 @@ class CSecActive:
         if type(energy) == tuple:
             energy = np.array(energy)
 
-        ## Some constants
+        ## Some param checks
         if (nLev != 2) and (nLev !=3):
         	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
         	nLev = 3
@@ -210,7 +269,7 @@ class CSec_H3lev:
     ########################################################################
         
         ## Create the CrossSections object
-        cs = OZpy.CrossSections.CrossSec(self.energy)
+        cs = CrossSec(self.energy)
 
         ## Most of the cross sections I want are held in this the kerr_poly
         ## class
@@ -368,7 +427,7 @@ class CSec_H2lev:
     ########################################################################
         
         ## Create the CrossSections object
-        cs = OZpy.CrossSections.CrossSec(self.energy)
+        cs = CrossSec(self.energy)
 
         ## Most of the cross sections I want are held in this the kerr_poly
         ## class
