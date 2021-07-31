@@ -14,28 +14,27 @@ import matplotlib.colorbar as cb
 
 """
 Solves the statistical equilibrium equations to obtain the number density of 
-the j suprathermal states.
+the J suprathermal states.
 
 Eliminates isum = -1 (by default) level (the suprathermal proton density) 
 equation and replaces it with particle conservation equation.
 
 
-Pij.N_J = Z
+[Pij] x [N_pops] = [X]
 
-X = zeroes
+X = zeroes if we collate creation and destruction within Rates matrix Pij
 
 Steps:
 
-*) Read in atmosphere object
-*) Read in active cross sections object
-*) 
-1) Sum up the contributions to each level 
-2) Subtract the transitions out of each level
-3) Set up the matrix equation 
-4) Use lin. alg. solver to return the array of pops
-5) Assign those pops to a class.
-
-Loop through height z, and energy E? 
+1) Read in atmosphere object
+2) Read in active cross sections object 
+3) Read in suprathermal proton distribution fn (e.g from RADYN+FP) 
+ ... loop through energy
+4) Sum up the contributions to each level 
+5) Subtract the transitions out of each level
+6) Set up the matrix equation 
+7) Use lin. alg. solver to return the array of pops
+8) Return the pops
 
 """
 def CalcPops(energy_cs, nHyd, nElec, nProt, height, times, 
@@ -182,6 +181,7 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
 
         Npop[:,:,:,eind] = np.linalg.solve(Pij, X)
 
+    ## If necessary remove extraneous dimensions
     Npop = np.squeeze(Npop)
  
     return Npop
