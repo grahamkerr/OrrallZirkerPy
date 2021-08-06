@@ -2,6 +2,7 @@ import numpy as np
 from OrrallZirkerPy.Atmos import AmbientPops, SuprathermalParticles 
 from OrrallZirkerPy.AtomData import CSecActive
 from OrrallZirkerPy.SuprathermalPops import CalcPops
+from OrrallZirkerPy.Emission import CalcEmissiv
 import copy 
 import sys
 
@@ -208,7 +209,7 @@ def OZ(nLev=3,
 
     SupraThmPops = CalcPops(csecA, atmos, nthmp, isum=isum)
 
-    # emiss = CalcEmissiv(SupraThmPops)
+    Emiss = CalcEmissiv(SupraThmPops)
 
-    return SupraThmPops
+    return Emiss, SupraThmPops, atmos
 

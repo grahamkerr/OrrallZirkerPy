@@ -192,8 +192,8 @@ def CalcPops(csec, atmos, nthmp,
         ## Replace one of the equations with the particle conservation equation
         Pij[:,:,isum,:] = 1.0
 
-        NthmProtons = 1.0 ## temp... normalise to 1, I guess?
-        X[:,:,isum] = NthmProtons ### From FP!
+        # NthmProtons = 1.0 ## temporary... normalises to 1, I guess?
+        X[:,:,isum] = NthmProtons 
 
         ########################################################################
         # Solve the Statistical Equilibrium Equations
