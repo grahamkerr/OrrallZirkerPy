@@ -1,6 +1,7 @@
 import numpy as np 
 # import OrrallZirkerPy as OZpy
 from OrrallZirkerPy.CrossSections import CrossSec
+from scipy import constants
 
 """
 The 'main' class CSecActive stores the cross sections in arrays of transition 
@@ -21,6 +22,66 @@ Graham Kerr
 July 2021
 
 """
+
+class Transitions:
+
+    def __init__(self, nLev = 3):
+        """
+        An object to hold atomic data needed to compute the emission:
+
+        wavelegnth_rest -- the rest wavelength of the line
+        upplev -- the upper level number of our model atom
+        lowlev -- the lower level number of our model atom
+        Aji -- the Einstein A coeff. of the transition 
+
+        Inputs
+        ______
+
+        nLev = the number of levels; selects either a 3 or 2 level 
+               hydrogen atom (default is nLev = 3)
+
+        Notes
+        _____
+
+
+        Graham Kerr
+        August 2021
+
+        """
+
+        if nLev == 3:
+
+            wavelength_rest = np.array((1215.6701,1025.728,6562.79))
+            upplev = np.array((1, 2, 2))
+            lowlev = np.array((0, 0, 1))
+            Aji = np.array((4.69800e8,5.57503e7,4.41018e7 ))
+            phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+
+            self.wavelength_rest = wavelength_rest
+            self.upplev = upplev
+            self.lowlev = lowlev
+            self.Aji = Aji
+            self.phot2erg = phot2erg
+            self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
+            self.nLev = nLev
+
+        elif nLev == 2:
+
+            wavelength_rest = np.array((1215.6701))
+            upplev = np.array((1))
+            lowlev = np.array((0))
+            Aji = np.array((4.69800e8))
+            phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+
+            self.wavelength_rest = wavelength_rest
+            self.upplev = upplev
+            self.lowlev = lowlev
+            self.Aji = Aji
+            self.phot2erg = phot2erg
+            self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
+            self.nLev = nLev
+
+
 class EinsteinA:
 
     def __init__(self, nLev = 3):
@@ -69,8 +130,8 @@ class EinsteinA:
         Aij[1,0] = 4.69800e8 ## Lyman alpha n = 2 --> n = 1
     
         if nLev == 3:
-            Aij[2,0] = 5.57503e8 ## Lyman beta n = 3 --> n = 1
-            Aij[2,1] = 4.41018e8 ## Balmer alpha n = 3 --> n = 2
+            Aij[2,0] = 5.57503e7 ## Lyman beta n = 3 --> n = 1
+            Aij[2,1] = 4.41018e7 ## Balmer alpha n = 3 --> n = 2
 
         self.nLev = nLev
         self.Aij = Aij
@@ -133,7 +194,7 @@ class CSecActive:
 
         self.energy = energy
         self.nE = len(self.energy)
-        self.nlev = nLev
+        self.nLev = nLev
         self.nLev_plus_cont = nLev+1
         self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 

@@ -1,8 +1,8 @@
 import numpy as np 
 import OrrallZirkerPy as OZpy
 from OrrallZirkerPy.EnergyToVel import energy2vel 
-from OrrallZirkerPy.AtomData import CSecActive, EinsteinA
-from OrrallZirkerPy.Atmos import AmbientPops, SuprathermalProtons 
+from OrrallZirkerPy.AtomData import EinsteinA
+import sys
 
 
 import matplotlib as mpl
@@ -37,20 +37,17 @@ Steps:
 8) Return the pops
 
 """
-def CalcPops(energy_cs, nHyd, nElec, nProt, height, times, 
-	          nLev = 3, isum = -1, debug = False):
+def CalcPops(csec, atmos, nthmp,
+	         # nthmp_f, nthmp_e, nthmp_mu, ionfrac = 1,
+	         isum = -1, debug = False):
     
 
     ########################################################################
     # Some preliminary set up
     ########################################################################
 
-    ## Create the atmosphere object
-    atmos = AmbientPops(nHyd = nHyd, nElec=nElec, nProt=nProt, height=height, times=times)
-
-    ## Create the cross section object
-    csecA = CSecActive(energy_cs, nLev = nLev)
-     
+    
+   
     if debug == True: 
         plt.plot(atmos.height[0,:]/1e8, atmos.nElec[0,:])  
         plt.plot(atmos.height[0,:]/1e8, atmos.nProt[0,:])
@@ -60,22 +57,45 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
 
     
     ## Number of energy bins, and convert to velocity
-    nE_cs = len(energy_cs)
-    vel_cs = energy2vel(energy_cs)
-
-    if len(nElec.shape) == 2:
-        nDim1 = nElec.shape[0]
-        nDim2 = nElec.shape[1]
-    if len(nElec.shape) == 1:
-    	nDim1 = nElec.shape[0]
+    nE_cs = csec.nE
+    energy = csec.energy
+    vel_cs = energy2vel(energy)
+    nLev = csec.nLev
+    
+    
+    ## Add additional dimnesions to atmosphere object if necessary 
+    ## (taken care of in the main routine, but just in case)
+    if len(atmos.nElec.shape) == 2:
+        nDim1 = atmos.nElec.shape[0]
+        nDim2 = atmos.nElec.shape[1]
+        if (nDim1 != nthmp.fe.shape[0]) or (nDim2 != nthmp.fe.shape[1]):
+        	sys.exit('>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')
+    if len(atmos.nElec.shape) == 1:
+    	nDim1 = atmos.nElec.shape[0]
     	nDim2 = 1
     	atmos.nProt = np.repeat(atmos.nProt[:, np.newaxis],1, axis=1)
     	atmos.nHyd = np.repeat(atmos.nHyd[:, np.newaxis],1, axis=1)
     	atmos.nElec = np.repeat(atmos.nElec[:, np.newaxis],1, axis=1)
-
-    if len(nElec.shape) == 0:
+    	atmos.height = np.repeat(atmos.height[:, np.newaxis],1, axis=1)
+    	# atmos.times = np.repeat(atmos.times[:, np.newaxis],1, axis=1)
+    	nthmp.fe = np.repeat(nthmp.fe[:, np.newaxis,:],1, axis=1)
+    	if (nDim1 != nthmp.fe.shape[0]) or (nDim2 != nthmp.fe.shape[1]):
+    		sys.exit('>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')
+    if len(atmos.nElec.shape) == 0:
         nDim1 = 1
         nDim2 = 1
+        atmos.nProt = np.repeat(atmos.nProt[np.newaxis,np.newaxis],1, axis=0)
+        atmos.nHyd = np.repeat(atmos.nHyd[np.newaxis,np.newaxis],1, axis=0)
+        atmos.nElec = np.repeat(atmos.nElec[np.newaxis,np.newaxis],1, axis=0)
+        atmos.height = np.repeat(atmos.height[np.newaxis,np.newaxis],1, axis=0)
+        # atmos.times = np.repeat(atmos.times[np.newaxis,np.newaxis],1, axis=0)
+        nthmp.fe = np.repeat(nthmp.fe[np.newaxis, np.newaxis,:],1, axis=0)
+        if (nDim1 != nthmp.fe.shape[0]) or (nDim2 != nthmp.fe.shape[1]):
+        	sys.exit('>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')
+    if len(atmos.nElec.shape) != len(nthmp.fe.shape)-1:
+        sys.exit('>>>Exiting... \n Dimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')
+    
+
 
     ## Factor to convert cross sections to cm^2
     cs2cm = 1e-17
@@ -84,17 +104,17 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
     ## Grab the Einstein Coefs
     Aij = EinsteinA(nLev = nLev)
 
-    ### So, im not sure what do about energy grid right now. Since I will be 
-    ### looping over energy later anyway I think it makes more sense to start 
-    ### that loop here, since the arrays can get vary large otherwise. 
-    ### DO I WANT TO INTERPOLATE TO THE ENERGIES IN FP... OR DO WE WANT TO DO 
-    ### THE OPPOSITE AND INTERPOLATE FP's PROTON DENSITIES?
 
-    Npop = np.zeros([nDim1, nDim2, nLev+1, nE_cs], dtype = np.float64)
+    NPops = np.zeros([nDim1, nDim2, nLev+1, nE_cs], dtype = np.float64)
 
 
     for eind in range(0,nE_cs):
     # for eind in range(100,101):
+    
+        ## Interpolate to energies at which the user has requested (energy_cs). This could
+        ## be done in the main routine, but doesn't hurt doing it here, in case this is 
+        ## run standalone. 
+        NthmProtons = nthmp.fe[:,:,eind]
 
         ########################################################################
         # Turn the Cross Sections into Rates
@@ -104,19 +124,19 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
         ###### as needed
 
         ## Charge Exchange 
-        C_ij_CX = np.repeat(csecA.cs_CX[:, :, eind, np.newaxis], nDim1, axis=2)
+        C_ij_CX = np.repeat(csec.cs_CX[:, :, eind, np.newaxis], nDim1, axis=2)
         C_ij_CX = np.repeat(C_ij_CX[:, :, :, np.newaxis], nDim2, axis=3)
 
         ## Proton collisions
-        C_ij_colP = np.repeat(csecA.cs_colP[:, :, eind, np.newaxis], nDim1, axis=2)
+        C_ij_colP = np.repeat(csec.cs_colP[:, :, eind, np.newaxis], nDim1, axis=2)
         C_ij_colP = np.repeat(C_ij_colP[:, :, :, np.newaxis], nDim2, axis=3)
 
         ## Hydrogen collisions
-        C_ij_colH = np.repeat(csecA.cs_colH[:, :, eind, np.newaxis], nDim1, axis=2)
+        C_ij_colH = np.repeat(csec.cs_colH[:, :, eind, np.newaxis], nDim1, axis=2)
         C_ij_colH = np.repeat(C_ij_colH[:, :, :, np.newaxis], nDim2, axis=3)
  
         ## Electron collisions
-        C_ij_colE = np.repeat(csecA.cs_colE[:, :, eind, np.newaxis], nDim1, axis=2)
+        C_ij_colE = np.repeat(csec.cs_colE[:, :, eind, np.newaxis], nDim1, axis=2)
         C_ij_colE = np.repeat(C_ij_colE[:, :, :, np.newaxis], nDim2, axis=3)
 
   
@@ -147,10 +167,10 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
 
         Pij = np.zeros([nDim1, nDim2, nLev+1, nLev+1], dtype = np.float64)
 
-        print(Pij.shape)
-        print(C_ij_colP.shape)
-        print(nDim1)
-        print(nDim2)
+        # print(Pij.shape)
+        # print(C_ij_colP.shape)
+        # print(nDim1)
+        # print(nDim2)
         for iind in range(0,nLev+1):
             for jind in range(0,nLev+1):
                 if iind!=jind:
@@ -179,10 +199,20 @@ def CalcPops(energy_cs, nHyd, nElec, nProt, height, times,
         # Solve the Statistical Equilibrium Equations
         ########################################################################
 
-        Npop[:,:,:,eind] = np.linalg.solve(Pij, X)
+        NPops[:,:,:,eind] = np.linalg.solve(Pij, X)
 
     ## If necessary remove extraneous dimensions
-    Npop = np.squeeze(Npop)
- 
-    return Npop
+    # Npop = np.squeeze(Npop)
+
+    class SupraThermPops_out:
+        def __init__(selfout):
+            selfout.NPops = NPops
+            selfout.energy = energy
+            selfout.nLev = nLev
+            selfout.Units = 'energy in [keV], Pops in [particles cm^-3 keV^-1]'
+
+    # out = SupraThermPops_out()
+
+       
+    return SupraThermPops_out()
 
