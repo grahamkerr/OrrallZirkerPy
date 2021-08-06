@@ -66,6 +66,17 @@ __________
 
 Some relevant references are: 
 
+Orrall & Zirker 1976, ApJ 208
+http://articles.adsabs.harvard.edu/pdf/1976ApJ...208..618O 
+
+Canfield & Chang 1985, ApJ 295
+http://articles.adsabs.harvard.edu/pdf/1985ApJ...295..275C
+
+Fang et al 1995, A&A 297
+http://articles.adsabs.harvard.edu/pdf/1995A%26A...297..854F
+
+Brosius & Woodgate 1999, ApJ
+https://ui.adsabs.harvard.edu/abs/1999ApJ...514..430B/abstract
 
 References related to cross sections are found in CrossSections.py
 
@@ -188,7 +199,6 @@ def OZ(nLev=3,
     	atmos.nHyd = np.repeat(atmos.nHyd[:, np.newaxis],1, axis=1)
     	atmos.nElec = np.repeat(atmos.nElec[:, np.newaxis],1, axis=1)
     	atmos.height = np.repeat(atmos.height[:, np.newaxis],1, axis=1)
-    	# atmos.times = np.repeat(atmos.times[:, np.newaxis],1, axis=1)
     	nthmp.fe = np.repeat(nthmp.fe[:, np.newaxis,:],1, axis=1)
     	if (nDim1 != nthmp.fe.shape[0]) or (nDim2 != nthmp.fe.shape[1]):
     		sys.exit('\n>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')
@@ -199,7 +209,6 @@ def OZ(nLev=3,
         atmos.nHyd = np.repeat(atmos.nHyd[np.newaxis,np.newaxis],1, axis=0)
         atmos.nElec = np.repeat(atmos.nElec[np.newaxis,np.newaxis],1, axis=0)
         atmos.height = np.repeat(atmos.height[np.newaxis,np.newaxis],1, axis=0)
-        # atmos.times = np.repeat(atmos.times[np.newaxis,np.newaxis],1, axis=0)
         nthmp.fe = np.repeat(nthmp.fe[np.newaxis, np.newaxis,:],1, axis=0)
         if (nDim1 != nthmp.fe.shape[0]) or (nDim2 != nthmp.fe.shape[1]):
         	sys.exit('\n>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth and time grid\n')

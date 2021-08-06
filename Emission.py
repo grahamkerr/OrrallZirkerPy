@@ -43,6 +43,10 @@ class CalcEmissiv:
     Methods
     _______
 
+    emiss2int_total(height): A fn to compute the emergent intensity, given the height array. 
+
+    emiss2int_z(height): A fn to compute the intensity in each grid cell, given the height array. 
+
 
     Notes
     _____
@@ -111,6 +115,36 @@ class CalcEmissiv:
            
        
     def emiss2int_z(self, height, harr = 1):
+    	"""
+    	A function to compute the intensity in each cell, given the height array.
+
+    	In each cell the intensity is emissivity * dZ
+
+    	Inputs
+    	______
+
+    	height -- the height array in cm. There should be a height array for each 
+    	          dimension of self.emiss. 
+    	harr -- which index of emiss coresponds to height (default is '1')
+
+    	Outputs
+    	_______
+
+    	intensity_z -- the intensity in each grid cell for each transition 
+    	               in erg/s/cm^2/sr/Ang. 
+
+    	Notes
+    	______
+
+    	* Some checking of array dimensions is performed, but be careful here.
+    	  Make sure you pass a height array that matches the dimensions of 
+    	  emiss, since time and height can be either one of the first two 
+    	  indices (depending on your input earlier).
+
+    	Graham Kerr
+    	August 2021
+
+    	"""
 
     	if len(height.shape) == 2:
             nDim1 = height.shape[0]
@@ -165,7 +199,36 @@ class CalcEmissiv:
 
     	return intensity_z
 
-    def emiss2int_total(self, height):
+    def emiss2int_total(self, height, harr=1):
+        """
+    	A function to compute the emergent intensity summed over the loop, given the height array.
+
+    	The intensity is integral(emissivity * dZ)
+
+    	Inputs
+    	______
+
+    	height -- the height array in cm. There should be a height array for each 
+    	          dimension of self.emiss. 
+    	harr -- which index of emiss coresponds to height (default is '1')
+
+    	Outputs
+    	_______
+
+    	intensity_total -- the intensity summed through the loop for each transition 
+    	                   in erg/s/cm^2/sr/Ang. 
+
+    	Notes
+    	______
+
+    	* Some checking of array dimensions is performed, but be careful here.
+    	  Make sure you pass a height array that matches the dimensions of 
+    	  emiss, since time and height can be either one of the first two 
+    	  indices (depending on your input earlier).
+
+    	Graham Kerr
+    	August 2021
+        """
 
         if len(height.shape) == 2:
             nDim1 = height.shape[0]
@@ -198,25 +261,13 @@ class CalcEmissiv:
         nDimTr = self.wavelength_rest.shape[0]
 
     	
+        if (harr == 1):
+            intensity_tot = np.zeros([nDim1, nDimE, nDimTr], dtype=np.float64)
+        elif (harr == 0):
+        	intensity_tot = np.zeros([nDim2, nDimE, nDimTr], dtype=np.float64)
 
-        intensity_tot = copy.deepcopy(self.emiss)
- 
-        # if harr == 1:
-        #     ### Difference in height (top of atmosphere is set to 0)
-        #     ### Finds where the largest height is (top of atmosphere) 
-        #     ind = np.where(height[0,:] == np.max(height[0,:]))[0][0]
-    	   #  dZ = np.roll(height[:,:],1) - height[:,:] 
-        #     dZ[:,ind]= 0
-        # elif harr == 0:
-        # 	### Difference in height (top of atmosphere is set to 0)
-        #     ### Finds where the largest height is (top of atmosphere) 
-        #     ind = np.where(height[:,0] == np.max(height[:,0]))[0][0]
-    	   #  dZ = np.roll(height[:,:],1) - height[:,:] 
-        #     dZ[ind,:]= 0
-
-        
         for trind in range(nDimTr):
     	    for eind in range(nDimE):
-	            intensity_tot[:,:,eind,trind] = np.trapz(self.emiss[:,:,eind,trind], x = height[:,:],axis=harr)
+	            intensity_tot[:,eind,trind] = np.trapz(np.flip(self.emiss[:,:,eind,trind],axis=harr), x = np.flip(height[:,:],axis=harr),axis=harr)
 
         return intensity_tot
