@@ -2,7 +2,6 @@ import numpy as np
 import OrrallZirkerPy as OZpy
 from OrrallZirkerPy.EnergyToVel import energy2vel 
 from OrrallZirkerPy.AtomData import Transitions
-# from OrrallZirkerPy.Atmos import AmbientPops, SuprathermalProtons 
 from scipy import constants 
 import sys
 import copy 
@@ -111,22 +110,113 @@ class CalcEmissiv:
 
            
        
-    def emiss2int_z(self, height):
+    def emiss2int_z(self, height, harr = 1):
+
+    	if len(height.shape) == 2:
+            nDim1 = height.shape[0]
+            nDim2 = height.shape[1]
+            if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+    	if len(height.shape) == 1:
+    	    nDim1 = height.shape[0]
+    	    nDim2 = 1
+    	    height = np.repeat(height[:, np.newaxis],1, axis=1)
+    	    harr = 0
+    	    if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+    	if len(height.shape) == 0:
+            nDim1 = 1
+            nDim2 = 1
+            height = np.repeat(height[np.newaxis,np.newaxis],1, axis=0)
+            if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+    	if nDim1 == 1 and nDim2 == 1:
+        	sys.exit('>>> Exiting... \nYou must enter a height array, not a single value, to evaluate the intensity in each cell (you need a dZ)')
         
-    	intensity_z = copy.deepcopy(self.emiss)
+    	if (harr != 0 and harr !=1):
+            harr = 1
+            print(">>> harr must be '0', or '1'... setting to default value of 1")
 
-    	intensity_z*=0.0
-
-    	nDim1 = self.emiss.shape[0]
-    	nDim2 = self.emiss.shape[1]
+    	nDim1_emiss = self.emiss.shape[0]
+    	nDim2_emiss = self.emiss.shape[1]
     	nDimE = self.energy.shape[0]
     	nDimTr = self.wavelength_rest.shape[0]
-       
+
+    	
+
+    	intensity_z = copy.deepcopy(self.emiss)
+ 
+    	if harr == 1:
+            ### Difference in height (top of atmosphere is set to 0)
+            ### Finds where the largest height is (top of atmosphere) 
+            ind = np.where(height[0,:] == np.max(height[0,:]))[0][0]
+            dZ = np.roll(height[:,:],1) - height[:,:] 
+            dZ[:,ind]= 0
+    	elif harr == 0:
+        	### Difference in height (top of atmosphere is set to 0)
+            ### Finds where the largest height is (top of atmosphere) 
+            ind = np.where(height[:,0] == np.max(height[:,0]))[0][0]
+            dZ = np.roll(height[:,:],1) - height[:,:] 
+            dZ[ind,:]= 0
+
+    	for trind in range(nDimTr):
+        	for eind in range(nDimE):
+        	    intensity_z[:,:,eind,trind]*=dZ
+
     	return intensity_z
 
     def emiss2int_total(self, height):
 
-        intensity_total = 0
+        if len(height.shape) == 2:
+            nDim1 = height.shape[0]
+            nDim2 = height.shape[1]
+            if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+        if len(height.shape) == 1:
+    	    nDim1 = height.shape[0]
+    	    nDim2 = 1
+    	    height = np.repeat(height[:, np.newaxis],1, axis=1)
+    	    harr = 0
+    	    if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+        if len(height.shape) == 0:
+            nDim1 = 1
+            nDim2 = 1
+            height = np.repeat(height[np.newaxis,np.newaxis],1, axis=0)
+            if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
+        	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
+        if nDim1 == 1 and nDim2 == 1:
+        	sys.exit('>>> Exiting... \nYou must enter a height array, not a single value, to evaluate the intensity in each cell (you need a dZ)')
         
-        return intensity_total
+        if (harr != 0 and harr !=1):
+            harr = 1
+            print(">>> harr must be '0', or '1'... setting to default value of 1")
 
+        nDim1_emiss = self.emiss.shape[0]
+        nDim2_emiss = self.emiss.shape[1]
+        nDimE = self.energy.shape[0]
+        nDimTr = self.wavelength_rest.shape[0]
+
+    	
+
+        intensity_tot = copy.deepcopy(self.emiss)
+ 
+        # if harr == 1:
+        #     ### Difference in height (top of atmosphere is set to 0)
+        #     ### Finds where the largest height is (top of atmosphere) 
+        #     ind = np.where(height[0,:] == np.max(height[0,:]))[0][0]
+    	   #  dZ = np.roll(height[:,:],1) - height[:,:] 
+        #     dZ[:,ind]= 0
+        # elif harr == 0:
+        # 	### Difference in height (top of atmosphere is set to 0)
+        #     ### Finds where the largest height is (top of atmosphere) 
+        #     ind = np.where(height[:,0] == np.max(height[:,0]))[0][0]
+    	   #  dZ = np.roll(height[:,:],1) - height[:,:] 
+        #     dZ[ind,:]= 0
+
+        
+        for trind in range(nDimTr):
+    	    for eind in range(nDimE):
+	            intensity_tot[:,:,eind,trind] = np.trapz(self.emiss[:,:,eind,trind], x = height[:,:],axis=harr)
+
+        return intensity_tot

@@ -114,7 +114,7 @@ def CalcPops(csec, atmos, nthmp,
         ## Interpolate to energies at which the user has requested (energy_cs). This could
         ## be done in the main routine, but doesn't hurt doing it here, in case this is 
         ## run standalone. 
-        NthmProtons = nthmp.fe[:,:,eind]
+        NthmProtons = nthmp.fe[:,:,eind]#*vel_cs[eind]
 
         ########################################################################
         # Turn the Cross Sections into Rates
