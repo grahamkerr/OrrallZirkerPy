@@ -83,7 +83,7 @@ References related to cross sections are found in CrossSections.py
 """
 
 
-def OZ(nLev=3, 
+def OZ(nLev=3, species = 'H', 
 	   nHyd=0, nElec=0, nProt=0, height=0, times=0, 
 	   nthmp_e=0, nthmp_mu=0, nthmp_f=0, ionfrac=1.0,
 	   isum = -1 
@@ -156,9 +156,10 @@ def OZ(nLev=3,
     """
     
     ## Some param checks
-    if (nLev != 2) and (nLev !=3):
-    	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
-    	nLev = 3
+    if species == 'H':
+        if (nLev != 2) and (nLev !=3):
+    	    print('\n>>> You have not entered a valid value of nLev (for H nLev = 2 or 3)\n     Defaulting to nLev = 3!')
+    	    nLev = 3
 
     ## These are must-have variables. The rest are optional 
     if ((len(np.array(nHyd).shape) == 0 and nHyd == 0) 
@@ -183,7 +184,7 @@ def OZ(nLev=3,
     nthmp = SuprathermalParticles(nthmp_e=nthmp_e, nthmp_mu=nthmp_mu, nthmp_f=nthmp_f, ionfrac=ionfrac)
 
     ## Create the cross secion object
-    csecA = CSecActive(energy, nLev=nLev)
+    csecA = CSecActive(energy, nLev=nLev, species = species)
 
   
     ## Add additional dimnesions to atmosphere object if necessary

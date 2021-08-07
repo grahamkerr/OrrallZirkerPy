@@ -1,6 +1,6 @@
 import numpy as np 
 # import OrrallZirkerPy as OZpy
-from OrrallZirkerPy.CrossSections import CrossSec
+from OrrallZirkerPy.CrossSections import CrossSecH
 from scipy import constants
 
 """
@@ -25,7 +25,7 @@ July 2021
 
 class Transitions:
 
-    def __init__(self, nLev = 3):
+    def __init__(self, nLev = 3, species = 'H'):
         """
         An object to hold atomic data needed to compute the emission:
 
@@ -49,42 +49,47 @@ class Transitions:
 
         """
 
-        if nLev == 3:
+        if species == 'H':
 
-            wavelength_rest = np.array((1215.6701,1025.728,6562.79))
-            upplev = np.array((1, 2, 2))
-            lowlev = np.array((0, 0, 1))
-            Aji = np.array((4.69800e8,5.57503e7,4.41018e7 ))
-            phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+            if nLev == 3:
 
-            self.wavelength_rest = wavelength_rest
-            self.upplev = upplev
-            self.lowlev = lowlev
-            self.Aji = Aji
-            self.phot2erg = phot2erg
-            self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
-            self.nLev = nLev
+                wavelength_rest = np.array((1215.6701,1025.728,6562.79))
+                upplev = np.array((1, 2, 2))
+                lowlev = np.array((0, 0, 1))
+                Aji = np.array((4.69800e8,5.57503e7,4.41018e7 ))
+                phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
 
-        elif nLev == 2:
+                self.wavelength_rest = wavelength_rest
+                self.upplev = upplev
+                self.lowlev = lowlev
+                self.Aji = Aji
+                self.phot2erg = phot2erg
+                self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
+                self.nLev = nLev
+                self.species = species
 
-            wavelength_rest = np.array((1215.6701))
-            upplev = np.array((1))
-            lowlev = np.array((0))
-            Aji = np.array((4.69800e8))
-            phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+            elif nLev == 2:
 
-            self.wavelength_rest = wavelength_rest
-            self.upplev = upplev
-            self.lowlev = lowlev
-            self.Aji = Aji
-            self.phot2erg = phot2erg
-            self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
-            self.nLev = nLev
+                wavelength_rest = np.array((1215.6701))
+                upplev = np.array((1))
+                lowlev = np.array((0))
+                Aji = np.array((4.69800e8))
+                phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+
+                self.wavelength_rest = wavelength_rest
+                self.upplev = upplev
+                self.lowlev = lowlev
+                self.Aji = Aji
+                self.phot2erg = phot2erg
+                self.mass = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
+                self.nLev = nLev
+                self.species = species
+
 
 
 class EinsteinA:
 
-    def __init__(self, nLev = 3):
+    def __init__(self, nLev = 3, species = 'H'):
 
         """
         An object to store the Einstein A values -- the inverse lifetimes
@@ -117,9 +122,10 @@ class EinsteinA:
     ########################################################################
 
         ## Some param checks
-        if (nLev != 2) and (nLev !=3):
-        	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
-        	nLev = 3
+        if species == 'H':
+            if (nLev != 2) and (nLev !=3):
+        	    print('\n>>> You have not entered a valid value of nLev (for H, nLev = 2 or 3)\n     Defaulting to nLev = 3!')
+        	    nLev = 3
        
         Aij = np.zeros([nLev+1,nLev+1],dtype = np.float64)
 
@@ -127,21 +133,22 @@ class EinsteinA:
     # Assign the values
     ########################################################################
     
-        Aij[1,0] = 4.69800e8 ## Lyman alpha n = 2 --> n = 1
+        if species == 'H':
+            Aij[1,0] = 4.69800e8 ## Lyman alpha n = 2 --> n = 1
     
-        if nLev == 3:
-            Aij[2,0] = 5.57503e7 ## Lyman beta n = 3 --> n = 1
-            Aij[2,1] = 4.41018e7 ## Balmer alpha n = 3 --> n = 2
+            if nLev == 3:
+                Aij[2,0] = 5.57503e7 ## Lyman beta n = 3 --> n = 1
+                Aij[2,1] = 4.41018e7 ## Balmer alpha n = 3 --> n = 2
 
-        self.nLev = nLev
-        self.Aij = Aij
+            self.nLev = nLev
+            self.Aij = Aij
         
 
  
 class CSecActive:
 
 
-    def __init__(self, energy, nLev = 3):
+    def __init__(self, energy, nLev = 3, species = 'H'):
         """
 
         An object to store the cross sections in arrays [i,j,E], e.g. a 
@@ -186,89 +193,91 @@ class CSecActive:
         if type(energy) == tuple:
             energy = np.array(energy)
 
-        ## Some param checks
-        if (nLev != 2) and (nLev !=3):
-        	print('\n>>> You have not entered a valid value of nLev (nLev = 2 or 3)\n     Defaulting to nLev = 3!')
-        	nLev = 3
+        ### Assign the cross sections for Hydrogen
+        if species == 'H':
+            if (nLev != 2) and (nLev !=3):
+        	    print('\n>>> You have not entered a valid value of nLev (for H, nLev = 2 or 3)\n     Defaulting to nLev = 3!')
+        	    nLev = 3
    
 
-        self.energy = energy
-        self.nE = len(self.energy)
-        self.nLev = nLev
-        self.nLev_plus_cont = nLev+1
-        self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+            self.energy = energy
+            self.nE = len(self.energy)
+            self.nLev = nLev
+            self.nLev_plus_cont = nLev+1
+            self.species = species
+            self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
-        if nLev == 3:
+            if nLev == 3:
             
-            ## Initialise the object
-            csecs = CSec_H3lev(energy)
-            cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                ## Initialise the object
+                csecs = CSec_H3lev(energy)
+                cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
  
-            ### Assign Charge Ex.
-            cs_CX[3,0,:] =  csecs.Q_p1      
-            cs_CX[3,1,:] =  csecs.Q_p2  
-            cs_CX[3,2,:] =  csecs.Q_p3  
+                ### Assign Charge Ex.
+                cs_CX[3,0,:] =  csecs.Q_p1      
+                cs_CX[3,1,:] =  csecs.Q_p2  
+                cs_CX[3,2,:] =  csecs.Q_p3  
 
-            #### Proton collisionsal excitation/ionisatiom
-            cs_colP[0,1,:] =  csecs.Q_12P
-            cs_colP[0,2,:] =  csecs.Q_13P
-            cs_colP[0,3,:] =  csecs.Q_1pP
-            cs_colP[1,2,:] =  csecs.Q_23P
-            cs_colP[1,3,:] =  csecs.Q_2pP
-            cs_colP[2,3,:] =  csecs.Q_3pP
+                #### Proton collisionsal excitation/ionisatiom
+                cs_colP[0,1,:] =  csecs.Q_12P
+                cs_colP[0,2,:] =  csecs.Q_13P
+                cs_colP[0,3,:] =  csecs.Q_1pP
+                cs_colP[1,2,:] =  csecs.Q_23P
+                cs_colP[1,3,:] =  csecs.Q_2pP
+                cs_colP[2,3,:] =  csecs.Q_3pP
 
-            #### Electron collisionsal excitation/ionisatiom
-            cs_colE[0,1,:] =  csecs.Q_12E
-            cs_colE[0,2,:] =  csecs.Q_13E
-            cs_colE[0,3,:] =  csecs.Q_1pE
-            cs_colE[1,2,:] =  csecs.Q_23E
-            cs_colE[1,3,:] =  csecs.Q_2pE
-            cs_colE[2,3,:] =  csecs.Q_3pE
+                #### Electron collisionsal excitation/ionisatiom
+                cs_colE[0,1,:] =  csecs.Q_12E
+                cs_colE[0,2,:] =  csecs.Q_13E
+                cs_colE[0,3,:] =  csecs.Q_1pE
+                cs_colE[1,2,:] =  csecs.Q_23E
+                cs_colE[1,3,:] =  csecs.Q_2pE
+                cs_colE[2,3,:] =  csecs.Q_3pE
 
-            #### Hydrogen collisionsal excitation/ionisatiom
-            cs_colH[0,1,:] =  csecs.Q_12H 
-            cs_colH[0,2,:] =  csecs.Q_13H
-            cs_colH[0,3,:] =  csecs.Q_1pH
-            # cs_colH[1,2,:] =  csecs.Q_23H 
-            # cs_colH[1,3,:] =  csecs.Q_2pH 
-            # cs_colH[2,3,:] =  csecs.Q_3pH 
+                #### Hydrogen collisionsal excitation/ionisatiom
+                cs_colH[0,1,:] =  csecs.Q_12H 
+                cs_colH[0,2,:] =  csecs.Q_13H
+                cs_colH[0,3,:] =  csecs.Q_1pH
+                # cs_colH[1,2,:] =  csecs.Q_23H 
+                # cs_colH[1,3,:] =  csecs.Q_2pH 
+                # cs_colH[2,3,:] =  csecs.Q_3pH 
 
-        elif nLev == 2:
+            elif nLev == 2:
 
-        	## Initialise the object
-            csecs = CSec_H2lev(energy)
-            cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
-            cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+        	    ## Initialise the object
+                csecs = CSec_H2lev(energy)
+                cs_colH = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_colP = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_colE = np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
+                cs_CX =   np.zeros([nLev+1, nLev+1, self.nE], dtype=np.float64)
  
-            ### Assign Charge Ex.
-            cs_CX[2,0,:] =  csecs.Q_p1      
-            cs_CX[2,1,:] =  csecs.Q_p2  
+                ### Assign Charge Ex.
+                cs_CX[2,0,:] =  csecs.Q_p1      
+                cs_CX[2,1,:] =  csecs.Q_p2  
 
-            #### Proton collisionsal excitation/ionisatiom
-            cs_colP[0,1,:] =  csecs.Q_12P
-            cs_colP[0,2,:] =  csecs.Q_1pP
-            cs_colP[1,2,:] =  csecs.Q_2pP
+                #### Proton collisionsal excitation/ionisatiom
+                cs_colP[0,1,:] =  csecs.Q_12P
+                cs_colP[0,2,:] =  csecs.Q_1pP
+                cs_colP[1,2,:] =  csecs.Q_2pP
 
-            #### Electron collisionsal excitation/ionisatiom
-            cs_colE[0,1,:] =  csecs.Q_12E
-            cs_colE[0,2,:] =  csecs.Q_12E
-            cs_colE[1,2,:] =  csecs.Q_2pE
+                #### Electron collisionsal excitation/ionisatiom
+                cs_colE[0,1,:] =  csecs.Q_12E
+                cs_colE[0,2,:] =  csecs.Q_12E
+                cs_colE[1,2,:] =  csecs.Q_2pE
 
-            #### Hydrogen collisionsal excitation/ionisatiom
-            cs_colH[0,1,:] =  csecs.Q_12H 
-            cs_colH[0,2,:] =  csecs.Q_1pH
-            # cs_colH[1,2,:] =  csecs.Q_2pH 
+                #### Hydrogen collisionsal excitation/ionisatiom
+                cs_colH[0,1,:] =  csecs.Q_12H 
+                cs_colH[0,2,:] =  csecs.Q_1pH
+                # cs_colH[1,2,:] =  csecs.Q_2pH 
 
                    
-        self.cs_CX = cs_CX
-        self.cs_colP = cs_colP
-        self.cs_colE = cs_colE
-        self.cs_colH = cs_colH
+            self.cs_CX = cs_CX
+            self.cs_colP = cs_colP
+            self.cs_colE = cs_colE
+            self.cs_colH = cs_colH
 
 
 class CSec_H3lev:

@@ -6,9 +6,11 @@ from scipy.optimize import curve_fit
 ################################################################################
 ################################################################################
 
-class CrossSec:
+class CrossSecH:
 
     '''
+
+    Cross sections for Hydrogen model atom
 
     Inputs
     _______
@@ -67,9 +69,14 @@ class CrossSec:
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
 
-    Graham Kerr
-    July 2021
 
+
+    Original:  
+    - Graham Kerr, July 2021
+    
+    Modified (only major mods listed):
+    - Graham Kerr, August 7th 2021, Started adding cross sections for suprathermal helium, 
+      so renamed this module CrossSecH.py.
 
     '''
 
@@ -2776,7 +2783,7 @@ def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0,
 
     Graham Kerr
     July 2021
-    
+
     """
     if emax == -100.0:
         emax = energy[-1]
