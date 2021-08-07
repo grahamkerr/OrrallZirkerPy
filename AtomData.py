@@ -339,7 +339,7 @@ class CSec_H3lev:
     ########################################################################
         
         ## Create the CrossSections object
-        cs = CrossSec(self.energy)
+        cs = CrossSecH(self.energy)
 
         ## Most of the cross sections I want are held in this the kerr_poly
         ## class
@@ -497,7 +497,7 @@ class CSec_H2lev:
     ########################################################################
         
         ## Create the CrossSections object
-        cs = CrossSec(self.energy)
+        cs = CrossSecH(self.energy)
 
         ## Most of the cross sections I want are held in this the kerr_poly
         ## class
