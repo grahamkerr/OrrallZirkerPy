@@ -5,13 +5,6 @@ from OrrallZirkerPy.AtomData import EinsteinA
 import sys
 
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
-from matplotlib.ticker import LogLocator
-from matplotlib import ticker
-import matplotlib.colorbar as cb
-
 """
 Solves the statistical equilibrium equations to obtain the number density of 
 the J suprathermal states.
@@ -37,24 +30,12 @@ Steps:
 8) Return the pops
 
 """
-def CalcPops(csec, atmos, nthmp,
-	         # nthmp_f, nthmp_e, nthmp_mu, ionfrac = 1,
-	         isum = -1, debug = False):
+def CalcPops(csec, atmos, nthmp, isum = -1):
     
 
     ########################################################################
     # Some preliminary set up
     ########################################################################
-
-    
-   
-    if debug == True: 
-        plt.plot(atmos.height[0,:]/1e8, atmos.nElec[0,:])  
-        plt.plot(atmos.height[0,:]/1e8, atmos.nProt[0,:])
-        plt.plot(atmos.height[0,:]/1e8, atmos.nHyd[0,:])
-        plt.yscale('log')
-        plt.show()
-
     
     ## Number of energy bins, and convert to velocity
     nE_cs = csec.nE
@@ -178,12 +159,14 @@ def CalcPops(csec, atmos, nthmp,
                     Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_colH[jind,iind, :, :] ## Creation
                     Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_colE[jind,iind, :, :] ## Creation
                     Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_CX[jind,iind, :, :] ## Creation (via Charge Ex)
+
+                    ## Destruction via collisions, then via emission 
                     Pij[:, :, iind, iind] = Pij[:, :, iind,iind] - (C_ij_colP[iind,jind, :, :] + 
                                                         C_ij_colH[iind,jind, :, :] +
                                                         C_ij_colE[iind,jind, :, :])
                     Pij[:, :, iind, iind] = Pij[:, :, iind,iind] - Aij.Aij[iind,jind]
 
-        ## Pij Npop = X
+        ## Pij * Npop = X
         ## X is the result of each equation, which is zero since we bring creation 
         ## and destruction on same side. It is a [Nlev+1 x 1] array... but we also 
         ## want to store this for each height or time point, if they are defined. 
@@ -209,6 +192,7 @@ def CalcPops(csec, atmos, nthmp,
             selfout.NPops = NPops
             selfout.energy = energy
             selfout.nLev = nLev
+            selfout.species = csec.species
             selfout.Units = 'energy in [keV], Pops in [particles cm^-3 keV^-1]'
 
     # out = SupraThermPops_out()

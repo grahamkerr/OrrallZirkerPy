@@ -6,9 +6,11 @@ from scipy.optimize import curve_fit
 ################################################################################
 ################################################################################
 
-class CrossSec:
+class CrossSecH:
 
     '''
+
+    Cross sections for Hydrogen model atom
 
     Inputs
     _______
@@ -67,9 +69,14 @@ class CrossSec:
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
 
-    Graham Kerr
-    July 2021
 
+
+    Original:  
+    - Graham Kerr, July 2021
+    
+    Modified (only major mods listed):
+    - Graham Kerr, August 7th 2021, Started adding cross sections for suprathermal helium, 
+      so renamed this module CrossSecH.py.
 
     '''
 
@@ -1886,6 +1893,137 @@ class CrossSec:
 ################################################################################
 ################################################################################
 
+
+class CrossSecHe:
+
+    '''
+
+    Cross sections for Helium model atom
+
+    Inputs
+    _______
+
+    energy -- projectile energy in keV (single value or array)
+
+    Methods
+    _______
+     
+    The methods attached to this class take the input energy and return various 
+    cross sections (see each method for a comprehensive list). Methods are:
+
+        kerr_fit_poly -- Mostly 8-degree polynomial fits to the underlying data 
+                          held in CrossSections.py. The higher energy ranges are 
+                          fit with straight lines in logE-logQ space to extrapolate 
+                          past the underlying data (use with caution). 
+                          Also includes several functional forms from the IAEA Vol 4 
+                          (Janev et al 1993).
+
+        Each of these outputs an object with energy in keV and cross sections in 10^-17 cm^2.
+
+
+
+    Notes
+    ______
+
+    This class takes a projectile energy in keV, either a single value or a list, 
+    and has various methods to compute cross sections of charge exchange or impact 
+    excitation/ionisation interactions between that energetic particle with ambient 
+    particles.
+
+    They are my own fits, combined with fits from sources such as IAEA. 
+
+    The underlying data for each cross section has different valid energy ranges, 
+    and so the fits have been made to those ranges, and have been extended 
+    via fitting linear decays (in logE-logQ space) to go to arbrotarily high energy 
+    (though of course those extrapolations should be used with care). 
+
+    Generally I would try and keep to 1 keV to 1 MeV. 
+
+    The underlying data are held in seperate classes within this script, and the fitting
+    functions are also located in this script. References are scattered throughout.
+
+    Original:  
+    - Graham Kerr, August 2021
+
+    '''
+
+    def __init__(self, energy):
+        
+        ## Turn to np array if an integer or float are provided
+        if type(energy) == int:
+            energy = np.array(energy)
+        if type(energy) == float:
+            energy = np.array(energy)
+        if type(energy) == tuple:
+            energy = np.array(energy)
+
+        self.energy = energy
+        self.nE = len(self.energy)
+
+################################################################################
+
+    def cs_kerr_poly(self):
+        '''
+        
+        This function will calculate the cross-sections required 
+        to compute the population of suprathermal Helium,
+        given an energy E in keV. 
+
+
+        Parameters
+        __________
+
+        energy : float
+            The energy at which to compute the cross sections, in keV
+
+
+        Outputs
+        _________
+
+        cross_secs : 
+            An object containing each cross section, in 10^-17 cm^2 
+
+
+        Notes
+        ________
+
+        Fits were done with energy in keV, cross. sec in [10^-17 cm^2],
+        in log-log space.
+
+        Graham Kerr
+        August 2021
+
+        '''
+        ########################################################################
+        # Calculate the cross sections from the fit coefficients
+        ########################################################################
+
+        ########
+        # Q_p1
+        ########
+        coefs_qp1 = [2.22694265e+00,  2.19952462e-01, -2.61594140e+00,  4.88314799e+00,
+                 -4.06254721e+00,  1.49092387e+00, -2.50756210e-01,  1.43541589e-02,
+                 3.20664286e-04]
+        polfit = Poly(coefs_qp1)
+
+        Q_p1 = 10.00**(polfit(np.log10(self.energy)))
+
+        class cs_kerr_poly_out:
+            def __init__(selfout):
+                selfout.Q_p1 = Q_p1
+                selfout.energy = self.energy
+                selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+        out = cs_kerr_poly_out()
+        out = 0.0
+
+        return out
+
+################################################################################
+################################################################################
+################################################################################
+
+
 class cs_iaea93_Q_1pE:
     """
     This class holds the energy and cross sections for various processes, 
@@ -2776,7 +2914,7 @@ def cs_polyfit(energy, csec, emin = -100.0, emax=-100.0,
 
     Graham Kerr
     July 2021
-    
+
     """
     if emax == -100.0:
         emax = energy[-1]
