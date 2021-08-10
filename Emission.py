@@ -73,7 +73,7 @@ class CalcEmissiv:
     
         ### Grab the atomic data regarding the transitions
         trans = Transitions(nLev = Nthm_data.nLev)
-        nDimTr = len(trans.Aji)
+        nDimTr = trans.Aji.size
 
         ### Do all dimensions match (this should be rare if running as part of the 
         ### main package... though might creep in if using separately)
@@ -87,23 +87,38 @@ class CalcEmissiv:
     ########################################################################
     # Calculate the emissivity
     ########################################################################
-   
-        val1 = (2.0*trans.mass)**0.5
-        val2 = 4.0*constants.pi*trans.wavelength_rest
+        
+        if nDimTr > 1:
+
+            val1 = (2.0*trans.mass)**0.5
+            val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
     
-        for eind in range(nDimE):
-            for trind in range(nDimTr):
-                emiss[:, :, eind, trind] = (val1/val2[trind] * 
+            for eind in range(nDimE):
+                for trind in range(nDimTr):
+                    emiss[:, :, eind, trind] = (val1/val2[trind] * 
         		                         Nthm_data.energy[eind]**0.5 * 
         		                         Nthm_data.NPops[:,:,trans.upplev[trind],eind] * 
         		                         trans.Aji[trind] ) * trans.phot2erg[trind]
 
 
-        dVel = energy2vel(Nthm_data.energy)/1e5
-        dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
-        for trind in range(nDimTr):
-        	dLambda[:,trind] = dVel/(constants.c/1e3) * trans.wavelength_rest[trind]
+            dVel = energy2vel(Nthm_data.energy)/1e5
+            dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
+            for trind in range(nDimTr):
+                dLambda[:,trind] = dVel/(constants.c/1e3) * trans.wavelength_rest[trind]
 
+        elif nDimTr == 1:
+
+            val1 = (2.0*trans.mass)**0.5
+            val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
+
+            for eind in range(nDimE):
+                emiss[:, :, eind, 0] = (val1/val2 * 
+                                         Nthm_data.energy[eind]**0.5 * 
+                                         Nthm_data.NPops[:,:,trans.upplev,eind] * 
+                                         trans.Aji ) * trans.phot2erg
+                dVel = energy2vel(Nthm_data.energy)/1e5
+                dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
+                dLambda[:,0] = dVel/(constants.c/1e3) * trans.wavelength_rest
 
         self.emiss = emiss
         self.wavelength_rest = trans.wavelength_rest
@@ -115,7 +130,7 @@ class CalcEmissiv:
            
        
     def emiss2int_z(self, height, harr = 1):
-    	"""
+        """
     	A function to compute the intensity in each cell, given the height array.
 
     	In each cell the intensity is emissivity * dZ
@@ -144,60 +159,60 @@ class CalcEmissiv:
     	Graham Kerr
     	August 2021
 
-    	"""
-
-    	if len(height.shape) == 2:
+        """
+        if len(height.shape) == 2:
             nDim1 = height.shape[0]
             nDim2 = height.shape[1]
             if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
         	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
-    	if len(height.shape) == 1:
+        if len(height.shape) == 1:
     	    nDim1 = height.shape[0]
     	    nDim2 = 1
     	    height = np.repeat(height[:, np.newaxis],1, axis=1)
     	    harr = 0
     	    if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
         	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
-    	if len(height.shape) == 0:
+        if len(height.shape) == 0:
             nDim1 = 1
             nDim2 = 1
             height = np.repeat(height[np.newaxis,np.newaxis],1, axis=0)
             if (nDim1 != self.emiss.shape[0]) or (nDim2 != self.emiss.shape[1]):
         	    sys.exit('\n>>> Exiting... \nDimenions of height array dont match dimensions of emission array.\nCheck your depth and time grid\n')
-    	if nDim1 == 1 and nDim2 == 1:
+        if nDim1 == 1 and nDim2 == 1:
         	sys.exit('>>> Exiting... \nYou must enter a height array, not a single value, to evaluate the intensity in each cell (you need a dZ)')
-        
-    	if (harr != 0 and harr !=1):
+        if (harr != 0 and harr !=1):
             harr = 1
             print(">>> harr must be '0', or '1'... setting to default value of 1")
 
-    	nDim1_emiss = self.emiss.shape[0]
-    	nDim2_emiss = self.emiss.shape[1]
-    	nDimE = self.energy.shape[0]
-    	nDimTr = self.wavelength_rest.shape[0]
+        nDim1_emiss = self.emiss.shape[0]
+        nDim2_emiss = self.emiss.shape[1]
+        nDimE = self.energy.shape[0]
+        nDimTr = self.wavelength_rest.size
 
-    	
+        intensity_z = copy.deepcopy(self.emiss)
 
-    	intensity_z = copy.deepcopy(self.emiss)
- 
-    	if harr == 1:
+        if harr == 1:
             ### Difference in height (top of atmosphere is set to 0)
             ### Finds where the largest height is (top of atmosphere) 
             ind = np.where(height[0,:] == np.max(height[0,:]))[0][0]
             dZ = np.roll(height[:,:],1) - height[:,:] 
             dZ[:,ind]= 0
-    	elif harr == 0:
+        elif harr == 0:
         	### Difference in height (top of atmosphere is set to 0)
             ### Finds where the largest height is (top of atmosphere) 
             ind = np.where(height[:,0] == np.max(height[:,0]))[0][0]
             dZ = np.roll(height[:,:],1) - height[:,:] 
             dZ[ind,:]= 0
 
-    	for trind in range(nDimTr):
-        	for eind in range(nDimE):
-        	    intensity_z[:,:,eind,trind]*=dZ
+        if nDimTr > 1:
+            for trind in range(nDimTr):
+                for eind in range(nDimE):
+                    intensity_z[:,:,eind,trind]*=dZ
+        elif nDimTr == 1:
+            for eind in range(nDimE):
+                intensity_z[:,:,eind,0]*=dZ
 
-    	return intensity_z
+        return intensity_z
 
     def emiss2int_total(self, height, harr=1):
         """
@@ -258,7 +273,7 @@ class CalcEmissiv:
         nDim1_emiss = self.emiss.shape[0]
         nDim2_emiss = self.emiss.shape[1]
         nDimE = self.energy.shape[0]
-        nDimTr = self.wavelength_rest.shape[0]
+        nDimTr = self.wavelength_rest.size
 
     	
         if (harr == 1):
@@ -266,8 +281,12 @@ class CalcEmissiv:
         elif (harr == 0):
         	intensity_tot = np.zeros([nDim2, nDimE, nDimTr], dtype=np.float64)
 
-        for trind in range(nDimTr):
-    	    for eind in range(nDimE):
-	            intensity_tot[:,eind,trind] = np.trapz(np.flip(self.emiss[:,:,eind,trind],axis=harr), x = np.flip(height[:,:],axis=harr),axis=harr)
+        if nDimTr > 1:
+            for trind in range(nDimTr):
+                for eind in range(nDimE):
+                    intensity_tot[:,eind,trind] = np.trapz(np.flip(self.emiss[:,:,eind,trind],axis=harr), x = np.flip(height[:,:],axis=harr),axis=harr)
+        elif nDimTr == 1:
+            for eind in range(nDimE):
+                intensity_tot[:,eind,0] = np.trapz(np.flip(self.emiss[:,:,eind,0],axis=harr), x = np.flip(height[:,:],axis=harr),axis=harr)
 
         return intensity_tot
