@@ -194,7 +194,11 @@ def CalcPops(csec, atmos, nthmp, isum = -1):
             selfout.nLev = nLev
             selfout.species = csec.species
             selfout.Units = 'energy in [keV], Pops in [particles cm^-3 keV^-1]'
-
+            # selfout.C_ij_colP = C_ij_colP
+            # selfout.C_ij_colH = C_ij_colH
+            # selfout.C_ij_colE = C_ij_colE
+            # selfout.C_ij_CX = C_ij_CX
+            # selfout.Pij = Pij
     # out = SupraThermPops_out()
 
        

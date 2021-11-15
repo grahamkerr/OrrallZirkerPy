@@ -56,7 +56,7 @@ class Transitions:
                 wavelength_rest = np.array((1215.6701,1025.728,6562.79))
                 upplev = np.array((1, 2, 2))
                 lowlev = np.array((0, 0, 1))
-                Aji = np.array((4.69800e8,5.57503e7,4.41018e7 ))
+                Aji = np.array((4.69800e8,5.57503e7,4.41018e7))
                 phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
 
                 self.wavelength_rest = wavelength_rest

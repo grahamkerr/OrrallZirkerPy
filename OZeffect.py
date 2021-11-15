@@ -18,7 +18,7 @@ of species other than H). That netural beam can then emit radiation,
 which is heavily doppler shifted and appears in the wing of the line.
 
 -- The atomic data used for this is obtained via AtomData, which collates the 
-required cross sections. The recommended (by us) cross sections are 
+required cross sections. The recommended (by GSK) cross sections are 
 hard coded in AtomData.CSecActive, but are straightforward to swap for others, 
 so long as they are contained with the CrossSections.py routine. 
 It is necessary to fit some function to underlying data to use cross sections 
@@ -53,7 +53,7 @@ on both energy and the equivalent wavelength scale (in Angstrom relative to line
 NOTES
 _____
 
-** Currently only set up for Hydrogen 2 or 3 level atom (Lyman alpa, Lyman 
+** Currently only set up for Hydrogen 2 or 3 level atom (Lyman alpha, Lyman 
 beta, Balmer alpha). Extending to arbritary species will take some reorganising. 
 ... 31st July 2021, Graham Kerr
 
