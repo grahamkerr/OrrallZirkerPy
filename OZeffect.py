@@ -1,7 +1,7 @@
 import numpy as np 
 from OrrallZirkerPy.Atmos import AmbientPops, SuprathermalParticles 
 from OrrallZirkerPy.AtomData import CSecActive
-from OrrallZirkerPy.SuprathermalPops import CalcPops
+from OrrallZirkerPy.SuprathermalPopsH import CalcPopsH
 from OrrallZirkerPy.Emission import CalcEmissiv
 import copy 
 import sys
@@ -135,7 +135,10 @@ def OZ(nLev=3, species = 'H',
             Optional (only required is pitch angle is resolved). 
     ionfract -- float
              The fraction of the injected particle spectrum (nthmp_f) that is the ion of 
-             interest. Optional, default = 1.0 (pure proton beam).
+             interest. Optional, default = 1.0. 
+             If you want to invesigate a beam that is 5% alpha particles then provide the
+             nonthermal proton pops and set ionfrac to 0.05. If you have the actual alpha
+             populations, for example, then you can just provide those and set ionfract = 1.
     isum -- int
             The level to be replaced by particle conservation equation. For most every purpose
             this is the nLev+1 (i.e proton/ion density), or '-1'. Be careful changing this. 
@@ -149,6 +152,12 @@ def OZ(nLev=3, species = 'H',
     Notes
     ______
 
+    ** If species = 'He' then a somewhat different procedure is followed, for now at least.
+       An n-level atom is not modelled. Instead, the approximate charge state distribution of 
+       the beam (originally alphas) is calculated. Then, from that the proportion in the 2p state
+       is calculated. This is a very idealised system, following Peter et al 1990. 
+       nLev can be any value
+
     Graham Kerr
     August 2021
 
@@ -160,6 +169,7 @@ def OZ(nLev=3, species = 'H',
         if (nLev != 2) and (nLev !=3):
     	    print('\n>>> You have not entered a valid value of nLev (for H nLev = 2 or 3)\n     Defaulting to nLev = 3!')
     	    nLev = 3
+    
 
     ## These are must-have variables. The rest are optional 
     if ((len(np.array(nHyd).shape) == 0 and nHyd == 0) 

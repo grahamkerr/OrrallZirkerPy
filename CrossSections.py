@@ -1924,16 +1924,12 @@ class CrossSecHe:
     The methods attached to this class take the input energy and return various 
     cross sections (see each method for a comprehensive list). Methods are:
 
-        kerr_fit_poly -- Mostly 8-degree polynomial fits to the underlying data 
-                          held in CrossSections.py. The higher energy ranges are 
-                          fit with straight lines in logE-logQ space to extrapolate 
-                          past the underlying data (use with caution). 
-                          Also includes several functional forms from the IAEA Vol 4 
-                          (Janev et al 1993).
+        kerr_fit_poly --  n-degree polynomial fits to the underlying data 
+                          held in CrossSections.py. For now these are only 
+                          valid from 25-400 keV, since we are doing the 
+                          initial estimates using the data from Peter et al 1990.
 
         Each of these outputs an object with energy in keV and cross sections in 10^-17 cm^2.
-
-
 
     Notes
     ______
@@ -1943,20 +1939,14 @@ class CrossSecHe:
     excitation/ionisation interactions between that energetic particle with ambient 
     particles.
 
-    They are my own fits, combined with fits from sources such as IAEA. 
-
-    The underlying data for each cross section has different valid energy ranges, 
-    and so the fits have been made to those ranges, and have been extended 
-    via fitting linear decays (in logE-logQ space) to go to arbrotarily high energy 
-    (though of course those extrapolations should be used with care). 
-
-    Generally I would try and keep to 1 keV to 1 MeV. 
+    They are my own fits from the data in Peter et al 1990. Will be updated later
+    with more modern data. 
 
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
 
     Original:  
-    - Graham Kerr, August 2021
+    - Graham Kerr, May 2022
 
     '''
 
@@ -1975,13 +1965,18 @@ class CrossSecHe:
 
 ################################################################################
 
-    def cs_kerr_poly(self):
+  
+    def cs_kerr_polyHe(self):
         '''
-        
         This function will calculate the cross-sections required 
-        to compute the population of suprathermal Helium,
+        to compute the population of suprathermal neutral He II,
         given an energy E in keV. 
 
+        Those cross sections are: 
+
+        
+        These are n-degree polynomial fits to the values from Peter et al 
+        1990. 
 
         Parameters
         __________
@@ -2004,7 +1999,7 @@ class CrossSecHe:
         in log-log space.
 
         Graham Kerr
-        August 2021
+        May 2022
 
         '''
         ########################################################################
@@ -2012,25 +2007,116 @@ class CrossSecHe:
         ########################################################################
 
         ########
-        # Q_p1
+        # Q_HeH
         ########
-        coefs_qp1 = [2.22694265e+00,  2.19952462e-01, -2.61594140e+00,  4.88314799e+00,
-                 -4.06254721e+00,  1.49092387e+00, -2.50756210e-01,  1.43541589e-02,
-                 3.20664286e-04]
-        polfit = Poly(coefs_qp1)
+        coefs_qHeH = [59.71348146, -154.64905448,  156.84272694,  -76.9737033 ,
+                      18.34061429,   -1.70778515]
+        polfit = Poly(coefs_qHeH)
+        Q_HeH = 10.00**(polfit(np.log10(self.energy)))
 
-        Q_p1 = 10.00**(polfit(np.log10(self.energy)))
+        ########
+        # Q_HeE
+        ########
+        coefs_qHeE = [-293.0500051 ,  605.53427275, -505.99526586,  214.61229752,
+                      -46.19856489,    4.03030576]
+        polfit = Poly(coefs_qHeE)
+        Q_HeE = 10.00**(polfit(np.log10(self.energy)))
 
-        class cs_kerr_poly_out:
-            def __init__(selfout):
-                selfout.Q_p1 = Q_p1
-                selfout.energy = self.energy
-                selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+        ########
+        # Q_HeP
+        ########
+        coefs_qHeP = [-115.14002004,  287.60627323, -285.47306929,  141.83573791,
+                      -35.17941228,    3.47159465]
+        polfit = Poly(coefs_qHeP)
+        Q_HeP = 10.00**(polfit(np.log10(self.energy)))
 
-        out = cs_kerr_poly_out()
-        out = 0.0
+        ########
+        # Q_HeCT
+        ########
+        coefs_qHeCT = [84.54905591, -212.61555062,  218.03135633, -111.24684861,
+                       28.0380946 ,   -2.80392937]
+        polfit = Poly(coefs_qHeCT)
+        Q_HeCT = 10.00**(polfit(np.log10(self.energy)))
 
-        return out
+        ########
+        # Q_He2H
+        ########
+        coefs_qHe2H = [557.07829595, -1392.16454083,  1365.70473693,  -659.80904131,
+                       157.35595934,   -14.84713636]
+        polfit = Poly(coefs_qHe2H)
+        Q_He2H = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2E
+        ########
+        coefs_qHe2E = [346.74390063, -709.77855665,  517.00425686, -161.50060239,
+                       18.42642086]
+        polfit = Poly(coefs_qHe2E)
+        Q_He2E = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2P
+        ########
+        coefs_qHe2P = [421.21806409, -1052.46741502,  1030.12172918,  -495.95909915,
+                       117.83983323,   -11.08030822]
+        polfit = Poly(coefs_qHe2P)
+        Q_He2P = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2CT
+        ########
+        coefs_qHe2CT = [-86.54544225,  179.64999787, -137.51272009,   46.46380778,
+                        -5.89820203]
+        polfit = Poly(coefs_qHe2CT)
+        Q_He2CT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2HCT
+        ########
+        coefs_qHe2HCT = [-39.79775294,  93.64234016, -77.65492913,  28.04059416,
+                         -3.8064501]
+        polfit = Poly(coefs_qHe2HCT)
+        Q_He2HCT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He3HCT
+        ########
+        coefs_qHe3HCT = [-264.56783414,  698.6886639 , -720.45173637,  365.79337967,
+                         -91.64956622,    9.05118512]
+        polfit = Poly(coefs_qHe3HCT)
+        Q_He3HCT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He3exH
+        ########
+        coefs_qHe3exH = [-91.80213855,  236.18734759, -231.59889532,  110.48763622,
+                         -25.74389304,    2.31903359]
+        polfit = Poly(coefs_qHe3exH)
+        Q_He3exH = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exH
+        ########
+        coefs_qHe2exH = [597.47935295, -1490.67278721,  1455.89056019,  -699.71002519,
+                         165.90430365,   -15.55642152]
+        polfit = Poly(coefs_qHe2exH)
+        Q_He2exH = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exE
+        ########
+        coefs_qHe2exE = [31648.77757257, -94385.56261033, 115984.93787952, -75262.70667683,
+                         27225.61205903,  -5209.61833307,    412.22169851]
+        polfit = Poly(coefs_qHe2exE)
+        Q_He2exE = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exP
+        ########
+        coefs_qHe2exP = [49.40761656, -131.67060217,  136.46049305,  -69.08097386,
+                         17.15238634,   -1.67830839]
+        polfit = Poly(coefs_qHe2exP)
+        Q_He2exP = 10.00**(polfit(np.log10(self.energy)))
 
 ################################################################################
 ################################################################################
@@ -2889,6 +2975,70 @@ class cs_shah81:
                                 3.04,  2.64,  2.38,  2.18,  1.97,  1.75,  
                                 1.58,  1.38))
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+################################################################################
+################################################################################
+################################################################################
+
+class cs_peter90:
+
+    '''
+    This class holds the energy and cross sections for various transitions, 
+    used in Peter et al 1990. Consult that paper for the references. 
+
+    Electron loss (neutral He)
+    Q_HeH: He + H -> He+ + H + e
+    Q_HeE: He + e -> He+ + e + e
+    Q_HeP: He + p -> He+ + p + e
+    Q_HeCT: He + p -> He+ + H
+
+    Electron gain (charge transfer)
+    Q_He2H: He+ + H -> He + p
+    Q_He3H: He+ + H -> He+ + p
+
+    Electron Loss (He II)
+    Q_He2H: He+ + H -> He2+ + H + e
+    Q_He2E: He+ + e -> He2+ + e + e
+    Q_He2P: He+ + p -> He2+ + p + e
+    Q_He2CT: He+ + p -> He2+ + H
+    
+    He II 2p creation:
+    Q_He3exH: He2+ + H -> He+ex + p
+    Q_He3exE: He2+ + e -> He+ex + photon
+    Q_He2exH: He+ + H -> He+ex + H
+    Q_He2exE: He+ + e -> He+ex + e
+    Q_He2exP: He+ + p -> He+ex + p
+
+
+
+
+    Energy range  25 -- 400 keV
+
+    '''
+    def __init__(self):
+        self.energy = np.array(( 25, 50, 75, 100, 150, 200, 300, 400))
+        
+        self.Q_HeH = np.array((4.7, 7.1, 7.0, 6.5, 4.3, 3.2, 2.1, 1.6))
+        self.Q_HeE = np.array((1e-4, 0.6, 3.5, 5.1, 6.0, 5.6, 3.9, 3.4))
+        self.Q_HeP = np.array((5.0, 12.0, 13.0, 12.0, 10.0, 8.0, 5.0, 4.0))
+        self.Q_HeCT = np.array((40.0, 11.0, 4.0, 2.5, 0.8, 0.3, 0.1, 0.03))
+    
+        self.Q_He2HCT = np.array((26.4, 8.7, 3.5, 2.2, 0.7, 0.23, 0.042, 0.0038))
+        self.Q_He3HCT = np.array((70.0, 20.0, 7.0, 4.0, 1.5, 0.4, 0.07, 0.015))
+
+        self.Q_He2H = np.array((0.094, 0.12, 0.36, 0.46, 0.48, 0.44, 0.40, 0.36))
+        self.Q_He2E = np.array((1e-6, 1e-5, 1e-4, 0.024, 0.39, 0.58, 0.69, 0.68))
+        self.Q_He2P = np.array((0.1, 0.2, 0.65, 0.85, 1.1, 1.1, 1.0, 0.9))
+        self.Q_He2CT = np.array((1.9, 2.6, 1.9, 1.2, 0.6, 0.2, 0.1, 0.01))
+
+        self.Q_He3exH = np.array((47.9, 13.6, 5.15, 2.35, 0.77, 0.252, 0.034, 0.0049))
+        self.Q_He2exH = np.array((0.0058, 0.009, 0.03, 0.05, 0.048, 0.044, 0.040, 0.036))
+        self.Q_He2exE = np.array((1e-6, 1e-4, 0.58, 0.69, 0.68, 0.67, 0.61, 0.56))
+        self.Q_He2exP = np.array((0.69, 0.94, 1.0, 1.0, 0.87, 0.81, 0.70, 0.61))
+
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
 
 
 ################################################################################
