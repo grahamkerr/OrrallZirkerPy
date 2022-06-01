@@ -2,6 +2,7 @@ import numpy as np
 from OrrallZirkerPy.Atmos import AmbientPops, SuprathermalParticles 
 from OrrallZirkerPy.AtomData import CSecActive
 from OrrallZirkerPy.SuprathermalPopsH import CalcPopsH
+from OrrallZirkerPy.SuprathermalPopsHe import CalcPopsHe
 from OrrallZirkerPy.Emission import CalcEmissiv
 import copy 
 import sys
@@ -226,8 +227,11 @@ def OZ(nLev=3, species = 'H',
     if len(atmos.nElec.shape) != len(nthmp.fe.shape)-1:
         sys.exit('\n>>> Exiting... \nDimenions of ambient particles dont match dimensions of injected proton spectrum.\nCheck your depth, time, and energy grids\n')
 
+    if species == 'H':
+        SupraThmPops = CalcPopsH(csecA, atmos, nthmp, isum=isum)
 
-    SupraThmPops = CalcPops(csecA, atmos, nthmp, isum=isum)
+    if species == 'He':
+        SupraThmPops = CalcPopsHe(csecA, atmos, nthmp, isum=isum)
 
     Emiss = CalcEmissiv(SupraThmPops)
 

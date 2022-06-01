@@ -72,7 +72,7 @@ class CalcEmissiv:
         nDimE = Nthm_data.NPops.shape[3]
     
         ### Grab the atomic data regarding the transitions
-        trans = Transitions(nLev = Nthm_data.nLev)
+        trans = Transitions(nLev = Nthm_data.nLev, species=Nthm_data.species)
         nDimTr = trans.Aji.size
 
         ### Do all dimensions match (this should be rare if running as part of the 
@@ -87,38 +87,53 @@ class CalcEmissiv:
     ########################################################################
     # Calculate the emissivity
     ########################################################################
+        if Nthm_data.species == 'H':
+            if nDimTr > 1:
+
+                val1 = (2.0*trans.mass)**0.5
+                val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
         
-        if nDimTr > 1:
-
-            val1 = (2.0*trans.mass)**0.5
-            val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
-    
-            for eind in range(nDimE):
-                for trind in range(nDimTr):
-                    emiss[:, :, eind, trind] = (val1/val2[trind] * 
-        		                         Nthm_data.energy[eind]**0.5 * 
-        		                         Nthm_data.NPops[:,:,trans.upplev[trind],eind] * 
-        		                         trans.Aji[trind] ) * trans.phot2erg[trind]
+                for eind in range(nDimE):
+                    for trind in range(nDimTr):
+                        emiss[:, :, eind, trind] = (val1/val2[trind] * 
+            		                         Nthm_data.energy[eind]**0.5 * 
+            		                         Nthm_data.NPops[:,:,trans.upplev[trind],eind] * 
+            		                         trans.Aji[trind] ) * trans.phot2erg[trind]
 
 
-            dVel = energy2vel(Nthm_data.energy)/1e5
-            dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
-            for trind in range(nDimTr):
-                dLambda[:,trind] = dVel/(constants.c/1e3) * trans.wavelength_rest[trind]
-
-        elif nDimTr == 1:
-
-            val1 = (2.0*trans.mass)**0.5
-            val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
-
-            for eind in range(nDimE):
-                emiss[:, :, eind, 0] = (val1/val2 * 
-                                         Nthm_data.energy[eind]**0.5 * 
-                                         Nthm_data.NPops[:,:,trans.upplev,eind] * 
-                                         trans.Aji ) * trans.phot2erg
-                dVel = energy2vel(Nthm_data.energy)/1e5
+                dVel = energy2vel(Nthm_data.energy,particle='proton')/1e5
                 dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
-                dLambda[:,0] = dVel/(constants.c/1e3) * trans.wavelength_rest
+                for trind in range(nDimTr):
+                    dLambda[:,trind] = dVel/(constants.c/1e3) * trans.wavelength_rest[trind]
+
+            elif nDimTr == 1:
+
+                val1 = (2.0*trans.mass)**0.5
+                val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
+
+                for eind in range(nDimE):
+                    emiss[:, :, eind, 0] = (val1/val2 * 
+                                             Nthm_data.energy[eind]**0.5 * 
+                                             Nthm_data.NPops[:,:,trans.upplev,eind] * 
+                                             trans.Aji ) * trans.phot2erg
+                    dVel = energy2vel(Nthm_data.energy,particle='proton')/1e5
+                    dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
+                    dLambda[:,0] = dVel/(constants.c/1e3) * trans.wavelength_rest
+
+        elif Nthm_data.species == 'He':
+            if nDimTr == 1:
+               
+                val1 = (2.0*trans.mass)**0.5
+                val2 = np.array(4.0*constants.pi*trans.wavelength_rest)
+
+                for eind in range(nDimE):
+                    emiss[:, :, eind, 0] = (val1/val2 * 
+                                             Nthm_data.energy[eind]**0.5 * 
+                                             Nthm_data.NPops_HeIIex[:,:,eind] * 
+                                             trans.Aji ) * trans.phot2erg
+                    dVel = energy2vel(Nthm_data.energy,particle='alpha')/1e5
+                    dLambda = np.zeros([nDimE, nDimTr], dtype = np.float64)
+                    dLambda[:,0] = dVel/(constants.c/1e3) * trans.wavelength_rest
 
         self.emiss = emiss
         self.wavelength_rest = trans.wavelength_rest

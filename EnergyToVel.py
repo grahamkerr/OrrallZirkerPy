@@ -54,8 +54,10 @@ def energy2vel(energy, particle = 'proton'):
         E_p = constants.value('proton mass energy equivalent in MeV')*1e3 #KeV/c^2
     elif particle == 'electron':
         E_p = constants.value('electron mass energy equivalent in MeV')*1e3 #KeV/c^2
+    elif particle == 'alpha':
+        E_p = constants.value('alpha particle mass energy equivalent in MeV')*1e3 #KeV/c^2
     else:
-    	print('\n>>> You have not entered a valid string ("proton" or "electron")\n     Defaulting to proton')
+    	print('\n>>> You have not entered a valid string ("proton", "electron", "alpha")\n     Defaulting to proton')
     	E_p = constants.value('proton mass energy equivalent in MeV')*1e3 #MKV/c^2
 
    

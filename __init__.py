@@ -1,1 +1,1 @@
-from . import OZeffect, CrossSections, Atmos, AtomData, EnergyToVel, SuprathermalPopsH, Emission
+from . import OZeffect, CrossSections, Atmos, AtomData, EnergyToVel, SuprathermalPopsH, SuprathermalPopsHe, Emission

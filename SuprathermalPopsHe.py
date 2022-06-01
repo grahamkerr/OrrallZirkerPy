@@ -6,16 +6,22 @@ import sys
 
 
 """
-Solves the statistical equilibrium equations to obtain the number density of 
-the J suprathermal states.
+Solves for the number density of suprathermal He II in the excited state, 
+following the arguments in Peter et al 1990. That is, the relative population 
+of suprathermal He I, He II and He III are calculated by solving the statistical 
+equilibrium eqns. The system of equations is constrained to keep the total equal 
+to unity (i.e. fraction of He I + He II + He III = 1).
 
-Eliminates isum = -1 (by default) level (the suprathermal proton density) 
-equation and replaces it with particle conservation equation.
+The assumption here is that the beam ions are initially He III (alphas), and that
+over time various processes can convert the alphas to other charge states. 
 
+Then, once those proportions are known the amount of He II in the excited level 
+is calculated. 
 
-[Pij] x [N_pops] = [X]
+Note that for most cases, especially when we are first using alpha beams, we likely
+just take a proton beam simulation and suppose that some fraction of those protons 
+are alphas (e.g. 5% according to Peter et al 1990).
 
-X = zeroes if we collate creation and destruction within Rates matrix Pij
 
 Steps:
 
@@ -30,20 +36,19 @@ Steps:
 8) Return the pops
 
 Graham Kerr
-August 2021
+May 2022
 
 """
-def CalcPopsH(csec, atmos, nthmp, isum = -1):
-    
+def CalcPopsHe(csec, atmos, nthmp, isum = -1):
 
-    ########################################################################
+	########################################################################
     # Some preliminary set up
     ########################################################################
     
     ## Number of energy bins, and convert to velocity
     nE_cs = csec.nE
     energy = csec.energy
-    vel_cs = energy2vel(energy,particle='proton')
+    vel_cs = energy2vel(energy,particle='alpha')
     nLev = csec.nLev
     
     
@@ -86,11 +91,11 @@ def CalcPopsH(csec, atmos, nthmp, isum = -1):
 
 
     ## Grab the Einstein Coefs
-    Aij = EinsteinA(nLev = nLev)
-
+    Aij = EinsteinA(nLev = nLev, species = 'He')
+    
 
     NPops = np.zeros([nDim1, nDim2, nLev+1, nE_cs], dtype = np.float64)
-
+    NPops_HeIIex = np.zeros([nDim1, nDim2, nE_cs], dtype = np.float64)
 
     for eind in range(0,nE_cs):
     # for eind in range(100,101):
@@ -100,7 +105,7 @@ def CalcPopsH(csec, atmos, nthmp, isum = -1):
         ## run standalone. **** DO I NEED TO DELETE THIS COMMENT... ARE WE STILL INERPOLATING,
         ## OR DO WE JUST REQUEST THE SAME ENERGIES AS IN THE FP ARRAY???
         NthmProtons = nthmp.fe[:,:,eind]#*vel_cs[eind]
-
+        
         ########################################################################
         # Turn the Cross Sections into Rates
         ########################################################################
@@ -108,85 +113,100 @@ def CalcPopsH(csec, atmos, nthmp, isum = -1):
         ###### extend the cross section arrays to cover the height or time arrays
         ###### as needed
 
-        ## Charge Exchange 
-        C_ij_CX = np.repeat(csec.cs_CX[:, :, eind, np.newaxis], nDim1, axis=2)
-        C_ij_CX = np.repeat(C_ij_CX[:, :, :, np.newaxis], nDim2, axis=3)
+        C_HeH = np.repeat(csec.cs_HeH[eind, np.newaxis], nDim1, axis=0)
+        C_HeH = np.repeat(C_HeH[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
 
-        ## Proton collisions
-        C_ij_colP = np.repeat(csec.cs_colP[:, :, eind, np.newaxis], nDim1, axis=2)
-        C_ij_colP = np.repeat(C_ij_colP[:, :, :, np.newaxis], nDim2, axis=3)
+        C_HeE = np.repeat(csec.cs_HeE[eind, np.newaxis], nDim1, axis=0)
+        C_HeE = np.repeat(C_HeE[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
 
-        ## Hydrogen collisions
-        C_ij_colH = np.repeat(csec.cs_colH[:, :, eind, np.newaxis], nDim1, axis=2)
-        C_ij_colH = np.repeat(C_ij_colH[:, :, :, np.newaxis], nDim2, axis=3)
- 
-        ## Electron collisions
-        C_ij_colE = np.repeat(csec.cs_colE[:, :, eind, np.newaxis], nDim1, axis=2)
-        C_ij_colE = np.repeat(C_ij_colE[:, :, :, np.newaxis], nDim2, axis=3)
+        C_HeP = np.repeat(csec.cs_HeP[eind, np.newaxis], nDim1, axis=0)
+        C_HeP = np.repeat(C_HeP[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
 
-  
-        C_ij_CX = np.multiply(C_ij_CX*cs2cm, atmos.nHyd) * vel_cs[eind]
-        C_ij_colP = np.multiply(C_ij_colP*cs2cm, atmos.nProt) * vel_cs[eind]
-        C_ij_colH = np.multiply(C_ij_colH*cs2cm, atmos.nHyd) * vel_cs[eind]
-        C_ij_colE = np.multiply(C_ij_colE*cs2cm, atmos.nElec) * vel_cs[eind]
+        C_HeCT = np.repeat(csec.cs_HeCT[eind, np.newaxis], nDim1, axis=0)
+        C_HeCT = np.repeat(C_HeCT[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
 
+        C_He2H = np.repeat(csec.cs_He2H[ eind, np.newaxis], nDim1, axis=0)
+        C_He2H = np.repeat(C_He2H[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2E = np.repeat(csec.cs_He2E[eind, np.newaxis], nDim1, axis=0)
+        C_He2E = np.repeat(C_He2E[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2P = np.repeat(csec.cs_He2P[ eind, np.newaxis], nDim1, axis=0)
+        C_He2P = np.repeat(C_He2P[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2CT = np.repeat(csec.cs_He2CT[eind, np.newaxis], nDim1, axis=0)
+        C_He2CT = np.repeat(C_He2CT[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2HCT = np.repeat(csec.cs_He2HCT[eind, np.newaxis], nDim1, axis=0)
+        C_He2HCT = np.repeat(C_He2HCT[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He3HCT = np.repeat(csec.cs_He3HCT[eind, np.newaxis], nDim1, axis=0)
+        C_He3HCT = np.repeat(C_He3HCT[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He3exH = np.repeat(csec.cs_He3exH[eind, np.newaxis], nDim1, axis=0)
+        C_He3exH = np.repeat(C_He3exH[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2exH = np.repeat(csec.cs_He2exH[eind, np.newaxis], nDim1, axis=0)
+        C_He2exH = np.repeat(C_He2exH[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2exE = np.repeat(csec.cs_He2exE[eind, np.newaxis], nDim1, axis=0)
+        C_He2exE = np.repeat(C_He2exE[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
+
+        C_He2exP = np.repeat(csec.cs_He2exP[eind, np.newaxis], nDim1, axis=0)
+        C_He2exP = np.repeat(C_He2exP[:, np.newaxis], nDim2, axis=1)*cs2cm*vel_cs[eind]
 
         ########################################################################
         # Create the rates matrix
         ########################################################################
 
-        # Pij = np.zeros([nLev+1, nLev+1, nDim1, nDim2], dtype = np.float64)
-        # for iind in range(0,nLev+1):
-        #     for jind in range(0,nLev+1):
-        #         if iind!=jind:
-        #             Pij[iind, jind, :, :] = Pij[iind, jind, :, :] + C_ij_colP[jind,iind, :, :] ## Creation
-        #             Pij[iind, jind, :, :] = Pij[iind, jind, :, :] + C_ij_colH[jind,iind, :, :] ## Creation
-        #             Pij[iind, jind, :, :] = Pij[iind, jind, :, :] + C_ij_colE[jind,iind, :, :] ## Creation
-        #             Pij[iind, jind, :, :] = Pij[iind, jind, :, :] + C_ij_CX[jind,iind, :, :] ## Creation (via Charge Ex)
-        #             Pij[iind, iind, :, :] = Pij[iind,iind, :, :] - (C_ij_colP[iind,jind, :, :] + 
-        #                                                 C_ij_colH[iind,jind, :, :] +
-        #                                                 C_ij_colE[iind,jind, :, :])
-        #             Pij[iind, iind, :, :] = Pij[iind,iind, :, :] - Aij.Aij[iind,jind]
-        ####### The above was an older version where I had height and time at the end for the Pij array. 
-        ####### I rearranged (below) in order to be able to pass the whole lot to the linalg solver.
-
         Pij = np.zeros([nDim1, nDim2, nLev+1, nLev+1], dtype = np.float64)
 
-        # print(Pij.shape)
-        # print(C_ij_colP.shape)
-        # print(nDim1)
-        # print(nDim2)
-        for iind in range(0,nLev+1):
-            for jind in range(0,nLev+1):
-                if iind!=jind:
-                    Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_colP[jind,iind, :, :] ## Creation
-                    Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_colH[jind,iind, :, :] ## Creation
-                    Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_colE[jind,iind, :, :] ## Creation
-                    Pij[:, :, iind, jind] = Pij[:, :, iind, jind] + C_ij_CX[jind,iind, :, :] ## Creation (via Charge Ex)
+        ## We are going to construct the Helium rates matrix 'by hand', filling
+        ## in each row. 
 
-                    ## Destruction via collisions, then via emission 
-                    Pij[:, :, iind, iind] = Pij[:, :, iind,iind] - (C_ij_colP[iind,jind, :, :] + 
-                                                        C_ij_colH[iind,jind, :, :] +
-                                                        C_ij_colE[iind,jind, :, :])
-                    Pij[:, :, iind, iind] = Pij[:, :, iind,iind] - Aij.Aij[iind,jind]
+        ## P_11 
+        Pij[:,:,0,0] = -1*atmos.nHyd*C_HeH + -1*atmos.nElec*C_HeE + -1*atmos.nProt*C_HeP + -1*atmos.nProt*C_HeCT
+        ## P_12
+        Pij[:,:,0,1] = atmos.nHyd*C_He2HCT
+        ## P_13
+        Pij[:,:,0,2] = 0.0
+        ## P_21
+        Pij[:,:,1,0] = atmos.nHyd*C_HeH + atmos.nElec*C_HeE + atmos.nProt*C_HeP + atmos.nProt*C_HeCT
+        ## P_22
+        Pij[:,:,1,1] = -1*atmos.nHyd*C_He2HCT + -1*atmos.nHyd*C_He2H + -1*atmos.nElec*C_He2E + -1*atmos.nProt*C_He2P + -1*atmos.nProt*C_He2CT 
+        ## P_23
+        Pij[:,:,1,2] = atmos.nHyd*C_He3HCT 
+        ## P_31
+        Pij[:,:,2,0] = 0.0
+        ## P_32
+        Pij[:,:,2,1] = atmos.nHyd*C_He2H + atmos.nElec*C_He2E + atmos.nProt*C_He2P + atmos.nProt*C_He2CT
+        ## P_33
+        Pij[:,:,2,2] = -1*atmos.nHyd*C_He3HCT
+
 
         ## Pij * Npop = X
         ## X is the result of each equation, which is zero since we bring creation 
         ## and destruction on same side. It is a [Nlev+1 x 1] array... but we also 
         ## want to store this for each height or time point, if they are defined. 
+        ##
+        ## For helium we are solving for each charge state: He I, He II, He III, 
+        ## so two bound levels (nLev = 2) plus the continuum.
         X = np.zeros([nDim1, nDim2, nLev+1], dtype = np.float64)
 
         ## Replace one of the equations with the particle conservation equation
-        Pij[:,:,isum,:] = 1.0
+        Pij[:,:,isum,:] = 1.
 
-        # NthmProtons = 1.0 ## temporary... normalises to 1
+        NthmProtons = 1.0 ## temporary... normalises to 1
         X[:,:,isum] = NthmProtons 
 
         ########################################################################
         # Solve the Statistical Equilibrium Equations
         ########################################################################
 
-        NPops[:,:,:,eind] = np.linalg.solve(Pij, X)
+        NPops[:,:,:,eind] = np.linalg.solve(Pij, X) 
+
+       	NPops_HeIIex[:,:,eind] = (atmos.nHyd*C_He3exH*NPops[:,:,2,eind] + atmos.nHyd*C_He2exH*NPops[:,:,1,eind] + atmos.nElec*C_He2exE*NPops[:,:,1,eind] + atmos.nProt*C_He2exP*NPops[:,:,1,eind])/Aij.Aij[0,0]	
+
 
     ## If necessary remove extraneous dimensions
     # Npop = np.squeeze(Npop)
@@ -194,17 +214,12 @@ def CalcPopsH(csec, atmos, nthmp, isum = -1):
     class SupraThermPops_out:
         def __init__(selfout):
             selfout.NPops = NPops
+            selfout.NPops_HeIIex = NPops_HeIIex
             selfout.energy = energy
             selfout.nLev = nLev
             selfout.species = csec.species
             selfout.Units = 'energy in [keV], Pops in [particles cm^-3 keV^-1]'
-            # selfout.C_ij_colP = C_ij_colP
-            # selfout.C_ij_colH = C_ij_colH
-            # selfout.C_ij_colE = C_ij_colE
-            # selfout.C_ij_CX = C_ij_CX
-            # selfout.Pij = Pij
-    # out = SupraThermPops_out()
-
-       
+                   
     return SupraThermPops_out()
+
 

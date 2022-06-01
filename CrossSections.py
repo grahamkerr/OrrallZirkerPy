@@ -77,6 +77,7 @@ class CrossSecH:
     Modified (only major mods listed):
     - Graham Kerr, August 7th 2021, Started adding cross sections for suprathermal helium, 
       so renamed this module CrossSecH.py.
+    - Graham Kerr, May 2022, The Helium cross sections from Peter et al 1990 were added.
 
     '''
 
@@ -2117,6 +2118,29 @@ class CrossSecHe:
                          17.15238634,   -1.67830839]
         polfit = Poly(coefs_qHe2exP)
         Q_He2exP = 10.00**(polfit(np.log10(self.energy)))
+
+        class cs_kerr_polyhe_out:
+            def __init__(selfout):
+                selfout.Q_HeH = Q_HeH
+                selfout.Q_HeE = Q_HeE
+                selfout.Q_HeP = Q_HeP
+                selfout.Q_HeCT = Q_HeCT
+                selfout.Q_He2H = Q_He2H
+                selfout.Q_He2E = Q_He2E
+                selfout.Q_He2P = Q_He2P
+                selfout.Q_He2CT = Q_He2CT
+                selfout.Q_He2HCT = Q_He2HCT
+                selfout.Q_He3HCT = Q_He3HCT
+                selfout.Q_He3exH = Q_He3exH
+                selfout.Q_He2exH = Q_He2exH
+                selfout.Q_He2exE = Q_He2exE
+                selfout.Q_He2exP = Q_He2exP
+                selfout.energy = self.energy
+                selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+        out = cs_kerr_polyhe_out()
+
+        return out
 
 ################################################################################
 ################################################################################
