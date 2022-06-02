@@ -196,7 +196,7 @@ def CalcPopsHe(csec, atmos, nthmp, isum = -1):
         ## Replace one of the equations with the particle conservation equation
         Pij[:,:,isum,:] = 1.
 
-        NthmProtons = 1.0 ## temporary... normalises to 1
+        # NthmProtons = 1.0 ## temporary... normalises to 1
         X[:,:,isum] = NthmProtons 
 
         ########################################################################
