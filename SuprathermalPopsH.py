@@ -29,8 +29,11 @@ Steps:
 7) Use lin. alg. solver to return the array of pops
 8) Return the pops
 
+Graham Kerr
+August 2021
+
 """
-def CalcPops(csec, atmos, nthmp, isum = -1):
+def CalcPopsH(csec, atmos, nthmp, isum = -1):
     
 
     ########################################################################
@@ -40,7 +43,7 @@ def CalcPops(csec, atmos, nthmp, isum = -1):
     ## Number of energy bins, and convert to velocity
     nE_cs = csec.nE
     energy = csec.energy
-    vel_cs = energy2vel(energy)
+    vel_cs = energy2vel(energy,particle='proton')
     nLev = csec.nLev
     
     
@@ -94,7 +97,8 @@ def CalcPops(csec, atmos, nthmp, isum = -1):
     
         ## Interpolate to energies at which the user has requested (energy_cs). This could
         ## be done in the main routine, but doesn't hurt doing it here, in case this is 
-        ## run standalone. 
+        ## run standalone. **** DO I NEED TO DELETE THIS COMMENT... ARE WE STILL INERPOLATING,
+        ## OR DO WE JUST REQUEST THE SAME ENERGIES AS IN THE FP ARRAY???
         NthmProtons = nthmp.fe[:,:,eind]#*vel_cs[eind]
 
         ########################################################################
@@ -175,7 +179,7 @@ def CalcPops(csec, atmos, nthmp, isum = -1):
         ## Replace one of the equations with the particle conservation equation
         Pij[:,:,isum,:] = 1.0
 
-        # NthmProtons = 1.0 ## temporary... normalises to 1, I guess?
+        # NthmProtons = 1.0 ## temporary... normalises to 1
         X[:,:,isum] = NthmProtons 
 
         ########################################################################
@@ -194,7 +198,11 @@ def CalcPops(csec, atmos, nthmp, isum = -1):
             selfout.nLev = nLev
             selfout.species = csec.species
             selfout.Units = 'energy in [keV], Pops in [particles cm^-3 keV^-1]'
-
+            # selfout.C_ij_colP = C_ij_colP
+            # selfout.C_ij_colH = C_ij_colH
+            # selfout.C_ij_colE = C_ij_colE
+            # selfout.C_ij_CX = C_ij_CX
+            # selfout.Pij = Pij
     # out = SupraThermPops_out()
 
        

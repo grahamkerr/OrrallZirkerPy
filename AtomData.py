@@ -1,6 +1,6 @@
 import numpy as np 
 # import OrrallZirkerPy as OZpy
-from OrrallZirkerPy.CrossSections import CrossSecH
+from OrrallZirkerPy.CrossSections import CrossSecH, CrossSecHe
 from scipy import constants
 
 """
@@ -56,7 +56,7 @@ class Transitions:
                 wavelength_rest = np.array((1215.6701,1025.728,6562.79))
                 upplev = np.array((1, 2, 2))
                 lowlev = np.array((0, 0, 1))
-                Aji = np.array((4.69800e8,5.57503e7,4.41018e7 ))
+                Aji = np.array((4.69800e8,5.57503e7,4.41018e7))
                 phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
 
                 self.wavelength_rest = wavelength_rest
@@ -85,6 +85,22 @@ class Transitions:
                 self.nLev = nLev
                 self.species = species
 
+        if species == 'He':
+
+            wavelength_rest = np.array((303.7858))
+            upplev = np.array((1))
+            lowlev = np.array((0))
+            Aji = np.array((100.29e8))
+            phot2erg = constants.h*1e7 * constants.c*1e10 / wavelength_rest#for c in angstrom/s; wavelength angstroms; h in erg s
+
+            self.wavelength_rest = wavelength_rest
+            self.upplev = upplev
+            self.lowlev = lowlev
+            self.Aji = Aji
+            self.phot2erg = phot2erg
+            self.mass = constants.value('alpha particle mass energy equivalent in MeV')*1e3 #KeV/c^2
+            self.nLev = nLev
+            self.species = species
 
 
 class EinsteinA:
@@ -126,7 +142,12 @@ class EinsteinA:
             if (nLev != 2) and (nLev !=3):
         	    print('\n>>> You have not entered a valid value of nLev (for H, nLev = 2 or 3)\n     Defaulting to nLev = 3!')
         	    nLev = 3
-       
+        
+        if species == 'He':
+            if (nLev !=2):
+                print('\n>>> You have not entered a valid value of nLev (for He, nLev = 2)\n     Defaulting to nLev = 2!')
+                nLev = 2
+
         Aij = np.zeros([nLev+1,nLev+1],dtype = np.float64)
 
     ########################################################################
@@ -142,6 +163,14 @@ class EinsteinA:
 
             self.nLev = nLev
             self.Aij = Aij
+
+        if species == 'He':
+            Aij[:,:] = 100.29e8 ## He II Lyman alpha n = 2 --> n = 1
+
+            self.nLev = nLev
+            self.Aij = Aij
+
+
         
 
  
@@ -192,6 +221,75 @@ class CSecActive:
             energy = np.array(energy)
         if type(energy) == tuple:
             energy = np.array(energy)
+
+        ### Assign the cross sections for Helium
+        if species == 'He':
+            if (nLev != 2):
+                print('\n>>> You have not entered a valid value of nLev (for He, nLev = 2)\n     Defaulting to nLev = 2!')
+                nLev = 2
+
+            self.energy = energy
+            self.nE = len(self.energy)
+            self.nLev = nLev
+            self.nLev_plus_cont = nLev+1
+            self.species = species
+            self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+            ## Initialise the object
+            csecs = CSec_He2lev(energy)
+            cs_HeH = np.zeros([self.nE], dtype=np.float64)
+            cs_HeE = np.zeros([self.nE], dtype=np.float64)
+            cs_HeP = np.zeros([self.nE], dtype=np.float64)
+            cs_HeCT = np.zeros([self.nE], dtype=np.float64)
+            cs_He2H = np.zeros([self.nE], dtype=np.float64)
+            cs_He2E = np.zeros([self.nE], dtype=np.float64)
+            cs_He2P = np.zeros([self.nE], dtype=np.float64)
+            cs_He2CT = np.zeros([self.nE], dtype=np.float64)
+            cs_He2HCT = np.zeros([self.nE], dtype=np.float64)
+            cs_He3HCT = np.zeros([self.nE], dtype=np.float64)
+            cs_He3exH = np.zeros([self.nE], dtype=np.float64)
+            cs_He2exH = np.zeros([self.nE], dtype=np.float64)
+            cs_He2exE = np.zeros([self.nE], dtype=np.float64)
+            cs_He2exP = np.zeros([self.nE], dtype=np.float64)
+
+            cs_HeH[:] =  csecs.Q_HeH
+            cs_HeE[:] =  csecs.Q_HeE
+            cs_HeP[:] =  csecs.Q_HeP
+            cs_HeCT[:] =  csecs.Q_HeCT
+
+            cs_He2H[:] =  csecs.Q_He2H
+            cs_He2E[:] =  csecs.Q_He2E
+            cs_He2P[:] =  csecs.Q_He2P
+            cs_He2CT[:] =  csecs.Q_He2CT
+
+            cs_He2HCT[:] =  csecs.Q_He2HCT
+            cs_He3HCT[:] =  csecs.Q_He3HCT
+            
+            cs_He3exH[:] = csecs.Q_He3exH
+            cs_He2exH[:] = csecs.Q_He2exH
+            cs_He2exE[:] = csecs.Q_He2exE
+            cs_He2exP[:] = csecs.Q_He2exP
+
+             
+            self.cs_HeH = cs_HeH
+            self.cs_HeE = cs_HeE
+            self.cs_HeP = cs_HeP
+            self.cs_HeCT = cs_HeCT
+
+            self.cs_He2H = cs_He2H
+            self.cs_He2E = cs_He2E
+            self.cs_He2P = cs_He2P
+            self.cs_He2CT = cs_He2CT
+
+            self.cs_He2HCT = cs_He2HCT
+            self.cs_He3HCT = cs_He3HCT
+            
+            self.cs_He3exH = cs_He3exH
+            self.cs_He2exH = cs_He2exH
+            self.cs_He2exE = cs_He2exE
+            self.cs_He2exP = cs_He2exP
+
+
 
         ### Assign the cross sections for Hydrogen
         if species == 'H':
@@ -278,6 +376,10 @@ class CSecActive:
             self.cs_colP = cs_colP
             self.cs_colE = cs_colE
             self.cs_colH = cs_colH
+
+
+
+
 
 
 class CSec_H3lev:
@@ -574,3 +676,126 @@ class CSec_H2lev:
         self.Q_23E = Q_23E
 
 
+class CSec_He2lev:
+    """
+     
+    He II 2 level atom cross sections (n = 1, 2) for 
+    Orrall Zirker Effcet calculations. 
+   
+
+    Inputs
+    _______
+
+    energy -- projectile energy in keV (single value or array)
+
+    Outputs
+    _______
+
+    An object with energy in keV and cross sections in 10^-17 cm^2,
+    for the cross sections detailed in the comments below.
+
+    Notes
+    ______
+
+    This class holds the cross sections to be used in the calculation 
+    of the Orrall-Zirker effect. 
+
+    It utilises the fits held in CrossSections.py and returns a similar 
+    structure, but this is designed to make it easy to swap in different
+    cross sections if required, without having to dig through lots of code. 
+
+    A projectile energy is input in keV.
+
+    Graham Kerr
+    May 2022
+
+    """
+    
+    def __init__(self, energy):
+    
+    ########################################################################
+    # Some preliminary set up
+    ########################################################################
+        ## Turn to np array if an integer or float are provided
+        if type(energy) == int:
+            energy = np.array(energy)
+        if type(energy) == float:
+            energy = np.array(energy)
+        if type(energy) == tuple:
+            energy = np.array(energy)
+
+        self.energy = energy
+        self.nE = len(self.energy)
+        self.nlev = 2
+        self.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+
+    ########################################################################
+    # Grab some data from CrossSections.py
+    ########################################################################
+        
+        ## Create the CrossSections object
+        cs = CrossSecHe(self.energy)
+
+        ## Most of the cross sections I want are held in this the kerr_poly
+        ## class
+        kerr_poly = cs.cs_kerr_polyHe()
+
+    ########################################################################
+    # Assign the cross sections
+    ########################################################################
+
+        ####################
+        ### Electron loss He I -> He II
+        ####################
+        Q_HeH = kerr_poly.Q_HeH
+        Q_HeE = kerr_poly.Q_HeE
+        Q_HeP = kerr_poly.Q_HeP
+        Q_HeCT = kerr_poly.Q_HeCT
+
+        ####################
+        ### Electron loss He II -> He III
+        ####################
+        Q_He2H = kerr_poly.Q_He2H
+        Q_He2E = kerr_poly.Q_He2E
+        Q_He2P = kerr_poly.Q_He2P
+        Q_He2CT = kerr_poly.Q_He2CT
+
+        ####################
+        ### Charge Ex 
+        ####################
+        Q_He2HCT = kerr_poly.Q_He2HCT
+        Q_He3HCT = kerr_poly.Q_He3HCT
+
+        ####################
+        ### Populate He II excited (n=2)
+        ####################
+        Q_He3exH = kerr_poly.Q_He3exH
+        Q_He2exH = kerr_poly.Q_He2exH
+        Q_He2exE = kerr_poly.Q_He2exE
+        Q_He2exP = kerr_poly.Q_He2exP
+
+
+    ########################################################################
+    # Define the output
+    ########################################################################
+
+        self.Q_HeH = Q_HeH
+        self.Q_HeE = Q_HeE
+        self.Q_HeP = Q_HeP
+        self.Q_HeCT = Q_HeCT
+
+        self.Q_He2H = Q_He2H
+        self.Q_He2E = Q_He2E
+        self.Q_He2P = Q_He2P
+        self.Q_He2CT = Q_He2CT
+
+        self.Q_He2HCT = Q_He2HCT
+        self.Q_He3HCT = Q_He3HCT
+
+        self.Q_He3exH = Q_He3exH
+        self.Q_He2exH = Q_He2exH
+        self.Q_He2exE = Q_He2exE
+        self.Q_He2exP = Q_He2exP
+       

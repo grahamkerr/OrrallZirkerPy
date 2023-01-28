@@ -234,6 +234,7 @@ class SuprathermalParticles:
         self.fe = fe
         self.e = nthmp_e
         self.mu = nthmp_mu
+        self.ionfrac = ionfrac
         self.units = 'Energy in [keV], distribution fn in [particles/cm^3/keV]'
 
 

@@ -77,6 +77,7 @@ class CrossSecH:
     Modified (only major mods listed):
     - Graham Kerr, August 7th 2021, Started adding cross sections for suprathermal helium, 
       so renamed this module CrossSecH.py.
+    - Graham Kerr, May 2022, The Helium cross sections from Peter et al 1990 were added.
 
     '''
 
@@ -288,30 +289,30 @@ class CrossSecH:
             Q_1pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_1pE = Q_1pE*1e-13/(eth*(self.energy*1e3))*1e17
        
-        ######H
-        # Q_1pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 0.015
-        emax = 10
-        coefs_q1pE_alt_1 = np.array((1.32318098, -1.47101701, -0.41715532,  0.46103678, -0.23126487,
-                                 0.13416711, -0.09528776,  0.0616035 , -0.03513007))
-        coefs_q1pE_alt_2 = np.array((0.06223376, -0.87223181))
-        deg = len(coefs_q1pE_alt_1)
-        polfit_2 = Poly(coefs_q1pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_1pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q1pE_alt_1, deg, emin, emax))
-            Q_1pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_1pE_alt = np.concatenate([Q_1pE_alt_tmp1,Q_1pE_alt_tmp2])
-        else: 
-            Q_1pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q1pE_alt_1, deg, emin, emax))
+        # ######H
+        # # Q_1pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 0.015
+        # emax = 10
+        # coefs_q1pE_alt_1 = np.array((1.32318098, -1.47101701, -0.41715532,  0.46103678, -0.23126487,
+        #                          0.13416711, -0.09528776,  0.0616035 , -0.03513007))
+        # coefs_q1pE_alt_2 = np.array((0.06223376, -0.87223181))
+        # deg = len(coefs_q1pE_alt_1)
+        # polfit_2 = Poly(coefs_q1pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_1pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q1pE_alt_1, deg, emin, emax))
+        #     Q_1pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_1pE_alt = np.concatenate([Q_1pE_alt_tmp1,Q_1pE_alt_tmp2])
+        # else: 
+        #     Q_1pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q1pE_alt_1, deg, emin, emax))
 
         #######
         # Q_12P **
         #######
-        amu = 1.00797
+        amu = 1.00
         A = np.array((34.433, 44.507, 0.56870, 8.5476, 7.8501, 
                       -9.2217, 1.8020e-2, 1.6931, 1.9422e-3, 2.9067))
         val1 = (np.exp(-A[1]/(self.energy/amu))*np.log(1+A[2]*(self.energy/amu)))/(self.energy/amu)
@@ -408,31 +409,31 @@ class CrossSecH:
         Q_12E+= B*np.log(self.energy*1e3/eth)
         Q_12E = Q_12E*5.984e-16/(eth*(self.energy*1e3/eth))*1e17
        
-        ######H
-        # Q_12E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 1.02e1/1e3
-        emax = 1e4/1e3
-        coefs_q12E_alt_1 = np.array((8.47065482e-01, -1.57769047e+00, -7.79759234e-01,  2.87835879e-01,
-                                    -7.98831339e-02,  6.76667688e-03,  7.56566128e-03, -4.81387004e-03,
-                                    1.06774858e-0))
-        coefs_q12E_alt_2 = np.array((0.12140192, -0.82993883))
-        deg = len(coefs_q12E_alt_1)
-        polfit_2 = Poly(coefs_q12E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_12E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q12E_alt_1, deg, emin, emax))
-            Q_12E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_12E_alt = np.concatenate([Q_12E_alt_tmp1,Q_12E_alt_tmp2])
-        else: 
-            Q_12E_alt = np.exp(chebyshev_fn(self.energy, coefs_q12E_alt_1, deg, emin, emax))
+        # ######H
+        # # Q_12E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 1.02e1/1e3
+        # emax = 1e4/1e3
+        # coefs_q12E_alt_1 = np.array((8.47065482e-01, -1.57769047e+00, -7.79759234e-01,  2.87835879e-01,
+        #                             -7.98831339e-02,  6.76667688e-03,  7.56566128e-03, -4.81387004e-03,
+        #                             1.06774858e-0))
+        # coefs_q12E_alt_2 = np.array((0.12140192, -0.82993883))
+        # deg = len(coefs_q12E_alt_1)
+        # polfit_2 = Poly(coefs_q12E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_12E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q12E_alt_1, deg, emin, emax))
+        #     Q_12E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_12E_alt = np.concatenate([Q_12E_alt_tmp1,Q_12E_alt_tmp2])
+        # else: 
+        #     Q_12E_alt = np.exp(chebyshev_fn(self.energy, coefs_q12E_alt_1, deg, emin, emax))
 
         #######
         # Q_13P **
         #######
-        amu = 1.00797
+        amu = 1.0
         A = np.array((6.1950, 35.773, 0.54818, 5.5162e-3,
                       0.29114, -4.5264, 6.0311, -2.0679))
         val1 = (np.exp(-1*A[1]/(self.energy/amu)) * np.log(1+A[2]*(self.energy/amu)))
@@ -547,30 +548,30 @@ class CrossSecH:
         Q_13E = Q_13E * ((self.energy*1e3 - eth)/(self.energy*1e3))**C
         Q_13E = Q_13E * 5.984e-16/(eth*(self.energy*1e3/eth))*1e17
 
-        ######H
-        # Q_13E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 1.24e1/1e3
-        emax = 1e4/1e3
-        coefs_q13E_alt_1 = np.array((-0.39785756, -1.59506388,  0.24481796,  0.54878841, -0.38718707,
-                                     0.29794288, -0.21806939,  0.14719962, -0.08219712))
-        coefs_q13E_alt_2 = np.array((-0.6484916 , -0.82911879))
-        deg = len(coefs_q13E_alt_1)
-        polfit_2 = Poly(coefs_q13E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_13E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q13E_alt_1, deg, emin, emax))
-            Q_13E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_13E_alt = np.concatenate([Q_13E_alt_tmp1,Q_13E_alt_tmp2])
-        else: 
-            Q_13E_alt = np.exp(chebyshev_fn(self.energy, coefs_q13E_alt_1, deg, emin, emax))
+        # ######H
+        # # Q_13E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 1.24e1/1e3
+        # emax = 1e4/1e3
+        # coefs_q13E_alt_1 = np.array((-0.39785756, -1.59506388,  0.24481796,  0.54878841, -0.38718707,
+        #                              0.29794288, -0.21806939,  0.14719962, -0.08219712))
+        # coefs_q13E_alt_2 = np.array((-0.6484916 , -0.82911879))
+        # deg = len(coefs_q13E_alt_1)
+        # polfit_2 = Poly(coefs_q13E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_13E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q13E_alt_1, deg, emin, emax))
+        #     Q_13E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_13E_alt = np.concatenate([Q_13E_alt_tmp1,Q_13E_alt_tmp2])
+        # else: 
+        #     Q_13E_alt = np.exp(chebyshev_fn(self.energy, coefs_q13E_alt_1, deg, emin, emax))
 
         #######
         # Q_2pP **
         #######
-        amu = 1.00797
+        amu = 1.0
         A = np.array((107.63, 29.860, 1.0176e6, 6.9713e-3, 
                       2.8488e-2, -1.8000, 4.7852e-2, -0.20923))
         val1 = (np.exp(-1*A[1]/(self.energy/amu)) * np.log(1+A[2]*(self.energy/amu)))/(self.energy/amu)
@@ -612,31 +613,31 @@ class CrossSecH:
             Q_2pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_2pE = Q_2pE*1e-13/(eth*(self.energy*1e3))*1e17
 
-        #######
-        # Q_2pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 4e0/1e3
-        emax = 1e4/1e3
-        coefs_q2pE_alt_1 = np.array(( 5.60146536, -2.51283518, -0.28192902,  0.45285694, -0.25986116,
-                                      0.1547214 , -0.09008906,  0.0471847 , -0.02968324))
-        coefs_q2pE_alt_2 = np.array((0.63663501, -0.90108125))
-        deg = len(coefs_q2pE_alt_1)
-        polfit_2 = Poly(coefs_q2pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_2pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q2pE_alt_1, deg, emin, emax))
-            Q_2pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_2pE_alt = np.concatenate([Q_2pE_alt_tmp1,Q_2pE_alt_tmp2])
-        else: 
-            Q_2pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q2pE_alt_1, deg, emin, emax))
+        # #######
+        # # Q_2pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 4e0/1e3
+        # emax = 1e4/1e3
+        # coefs_q2pE_alt_1 = np.array(( 5.60146536, -2.51283518, -0.28192902,  0.45285694, -0.25986116,
+        #                               0.1547214 , -0.09008906,  0.0471847 , -0.02968324))
+        # coefs_q2pE_alt_2 = np.array((0.63663501, -0.90108125))
+        # deg = len(coefs_q2pE_alt_1)
+        # polfit_2 = Poly(coefs_q2pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_2pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q2pE_alt_1, deg, emin, emax))
+        #     Q_2pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_2pE_alt = np.concatenate([Q_2pE_alt_tmp1,Q_2pE_alt_tmp2])
+        # else: 
+        #     Q_2pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q2pE_alt_1, deg, emin, emax))
 
 
         #######
         # Q_23P **
         #######
-        amu = 1.00797
+        amu = 1.0
         A = np.array((394.51, 21.606, 0.62426, 0.013596, 0.16565, -0.8949))
         val1 = (np.exp(A[1]/(self.energy/amu)) * np.log(1+A[2]*(self.energy/amu)))/(self.energy/amu)
         val2 = (A[3]*np.exp(-1.0*A[4]*(self.energy/amu)))/(((self.energy/amu))**A[5])
@@ -682,26 +683,26 @@ class CrossSecH:
         Q_23E = Q_23E * ((self.energy*1e3 - eth)/(self.energy*1e3))**C
         Q_23E = Q_23E * 5.984e-16/(eth*(self.energy*1e3/eth))*1e17
 
-        ######H
-        # Q_23E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 2e0/1e3
-        emax = 1e4/1e3
-        coefs_q23E_alt_1 = np.array(( 6.88850867e+00, -2.60595372e+00, -9.15696581e-01,  2.35419562e-01,
-                                     -4.85185197e-02, -4.14909074e-02,  6.15003585e-02, -3.85093036e-02,
-                                      5.79295021e-03))
-        coefs_q23E_alt_2 = np.array((1.17839148, -0.86544671))
-        deg = len(coefs_q23E_alt_1)
-        polfit_2 = Poly(coefs_q23E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_23E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q23E_alt_1, deg, emin, emax))
-            Q_23E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_23E_alt = np.concatenate([Q_23E_alt_tmp1,Q_23E_alt_tmp2])
-        else: 
-            Q_23E_alt = np.exp(chebyshev_fn(self.energy, coefs_q23E_alt_1, deg, emin, emax))
+        # ######H
+        # # Q_23E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 2e0/1e3
+        # emax = 1e4/1e3
+        # coefs_q23E_alt_1 = np.array(( 6.88850867e+00, -2.60595372e+00, -9.15696581e-01,  2.35419562e-01,
+        #                              -4.85185197e-02, -4.14909074e-02,  6.15003585e-02, -3.85093036e-02,
+        #                               5.79295021e-03))
+        # coefs_q23E_alt_2 = np.array((1.17839148, -0.86544671))
+        # deg = len(coefs_q23E_alt_1)
+        # polfit_2 = Poly(coefs_q23E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_23E_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q23E_alt_1, deg, emin, emax))
+        #     Q_23E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_23E_alt = np.concatenate([Q_23E_alt_tmp1,Q_23E_alt_tmp2])
+        # else: 
+        #     Q_23E_alt = np.exp(chebyshev_fn(self.energy, coefs_q23E_alt_1, deg, emin, emax))
 
         #######
         # Q_3pP **
@@ -748,25 +749,25 @@ class CrossSecH:
             Q_3pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_3pE = Q_3pE*1e-13/(eth*(self.energy*1e3))*1e17
 
-        #######
-        # Q_3pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        emin = 2e0/1e3
-        emax = 1e4/1e3
-        coefs_q3pE_alt_1 = np.array(( 7.69844713, -3.12200882, -0.39146522,  0.41802356, -0.2297936 ,
-                                      0.1255565 , -0.06042046,  0.02884291, -0.01828263))
-        coefs_q3pE_alt_2 = np.array((0.95907927, -0.95892717))
-        deg = len(coefs_q3pE_alt_1)
-        polfit_2 = Poly(coefs_q3pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_3pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q3pE_alt_1, deg, emin, emax))
-            Q_3pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_3pE_alt = np.concatenate([Q_3pE_alt_tmp1,Q_3pE_alt_tmp2])
-        else: 
-            Q_3pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q3pE_alt_1, deg, emin, emax))
+        # #######
+        # # Q_3pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # emin = 2e0/1e3
+        # emax = 1e4/1e3
+        # coefs_q3pE_alt_1 = np.array(( 7.69844713, -3.12200882, -0.39146522,  0.41802356, -0.2297936 ,
+        #                               0.1255565 , -0.06042046,  0.02884291, -0.01828263))
+        # coefs_q3pE_alt_2 = np.array((0.95907927, -0.95892717))
+        # deg = len(coefs_q3pE_alt_1)
+        # polfit_2 = Poly(coefs_q3pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0][-1]
+        #     Q_3pE_alt_tmp1 = np.exp(chebyshev_fn(self.energy[:eind1+1], coefs_q3pE_alt_1, deg, emin, emax))
+        #     Q_3pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #     Q_3pE_alt = np.concatenate([Q_3pE_alt_tmp1,Q_3pE_alt_tmp2])
+        # else: 
+        #     Q_3pE_alt = np.exp(chebyshev_fn(self.energy, coefs_q3pE_alt_1, deg, emin, emax))
 
 
 
@@ -783,14 +784,14 @@ class CrossSecH:
                 selfout.Q_1pP = Q_1pP
                 selfout.Q_1pH = Q_1pH
                 selfout.Q_1pE = Q_1pE
-                selfout.Q_1pE_alt = Q_1pE_alt 
+                # selfout.Q_1pE_alt = Q_1pE_alt 
                 selfout.Q_12P = Q_12P
                 selfout.Q_12P_alt = Q_12P_alt
                 selfout.Q_12H = Q_12H
                 selfout.Q_12H_2s = Q_12H_2s
                 selfout.Q_12H_2p = Q_12H_2p
                 selfout.Q_12E = Q_12E
-                selfout.Q_12E_alt = Q_12E_alt
+                # selfout.Q_12E_alt = Q_12E_alt
                 selfout.Q_13P = Q_13P
                 selfout.Q_13P_alt = Q_13P_alt
                 selfout.Q_13H = Q_13H
@@ -798,22 +799,22 @@ class CrossSecH:
                 selfout.Q_13H_3p = Q_13H_3p
                 selfout.Q_13H_3d = Q_13H_3d
                 selfout.Q_13E = Q_13E
-                selfout.Q_13E_alt = Q_13E_alt
+                # selfout.Q_13E_alt = Q_13E_alt
                 selfout.Q_2pP = Q_2pP
                 selfout.Q_2pP_alt  = Q_2pP_alt
                 # selfout.Q_2pH = Q_2pH
                 selfout.Q_2pE = Q_2pE
-                selfout.Q_2pE_alt = Q_2pE_alt
+                # selfout.Q_2pE_alt = Q_2pE_alt
                 selfout.Q_23P = Q_23P
                 selfout.Q_23P_alt = Q_23P_alt
                 # selfout.Q_23H = Q_23H
                 selfout.Q_23E = Q_23E
-                selfout.Q_23E = Q_23E_alt
+                # selfout.Q_23E = Q_23E_alt
                 selfout.Q_3pP = Q_3pP
                 selfout.Q_3pP_alt = Q_3pP_alt
                 # selfout.Q_3pH = Q_3pH
                 selfout.Q_3pE = Q_3pE
-                selfout.Q_3pE_alt = Q_3pE_alt
+                # selfout.Q_3pE_alt = Q_3pE_alt
                 selfout.energy = self.energy
                 selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
@@ -1029,28 +1030,31 @@ class CrossSecH:
             Q_1pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_1pE = Q_1pE*1e-13/(eth*(self.energy*1e3))*1e17
 
-        #######
-        # Q_1pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space
-        coefs_q1pE_alt_1 = np.array((0.05984789, -0.80896196, -0.03479957, -0.21542295, -0.1196005 ,
-                                 0.49888993,  0.17969381, -0.25437738, -0.12362548))
-        coefs_q1pE_alt_2 = np.array((0.06223376, -0.87223181))
-        polfit_1 = Poly(coefs_q1pE_alt_1)
-        polfit_2 = Poly(coefs_q1pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_1pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_1pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_1pE_alt = np.concatenate([Q_1pE_alt_tmp1,Q_1pE_alt_tmp2])
-        else: 
-            Q_1pE_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_1pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space
+        # coefs_q1pE_alt_1 = np.array((0.05984789, -0.80896196, -0.03479957, -0.21542295, -0.1196005 ,
+        #                          0.49888993,  0.17969381, -0.25437738, -0.12362548))
+        # coefs_q1pE_alt_2 = np.array((0.06223376, -0.87223181))
+        # polfit_1 = Poly(coefs_q1pE_alt_1)
+        # polfit_2 = Poly(coefs_q1pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_1pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_1pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_1pE_alt = np.concatenate([Q_1pE_alt_tmp1,Q_1pE_alt_tmp2])
+
+        # else: 
+        #     Q_1pE_alt = 10**(polfit_1(np.log10(self.energy)))
 
         #######
         # Q_12P **
         #######
-        amu = 1.00797
+        amu = 1.0
         A = np.array((34.433, 44.507, 0.56870, 8.5476, 7.8501, 
                       -9.2217, 1.8020e-2, 1.6931, 1.9422e-3, 2.9067))
         val1 = (np.exp(-A[1]/(self.energy/amu))*np.log(1+A[2]*(self.energy/amu)))/(self.energy/amu)
@@ -1141,23 +1145,25 @@ class CrossSecH:
         Q_12E+= B*np.log(self.energy*1e3/eth)
         Q_12E = Q_12E*5.984e-16/(eth*(self.energy*1e3/eth))*1e17
 
-        #######
-        # Q_12E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
-        coefs_q12E_alt_1 = np.array((0.11648916, -0.78548145, -0.06587174,  0.03026489, -0.00756062,
-                                     0.00889251, -0.01263208,  0.00140759,  0.00236978))
-        coefs_q12E_alt_2 = np.array((0.12140192, -0.82993883))
-        polfit_1 = Poly(coefs_q12E_alt_1)
-        polfit_2 = Poly(coefs_q12E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_12E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_12E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_12E_alt = np.concatenate([Q_12E_alt_tmp1,Q_12E_alt_tmp2])
-        else: 
-            Q_12E_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_12E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
+        # coefs_q12E_alt_1 = np.array((0.11648916, -0.78548145, -0.06587174,  0.03026489, -0.00756062,
+        #                              0.00889251, -0.01263208,  0.00140759,  0.00236978))
+        # coefs_q12E_alt_2 = np.array((0.12140192, -0.82993883))
+        # polfit_1 = Poly(coefs_q12E_alt_1)
+        # polfit_2 = Poly(coefs_q12E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_12E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_12E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_12E_alt = np.concatenate([Q_12E_alt_tmp1,Q_12E_alt_tmp2])
+        # else: 
+        #     Q_12E_alt = 10**(polfit_1(np.log10(self.energy)))
        
 
         #######
@@ -1267,23 +1273,25 @@ class CrossSecH:
         Q_13E = Q_13E * ((self.energy*1e3 - eth)/(self.energy*1e3))**C
         Q_13E = Q_13E * 5.984e-16/(eth*(self.energy*1e3/eth))*1e17
 
-        #######
-        # Q_13E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
-        coefs_q13E_alt_1 = np.array((-0.647381  , -0.709998  , -0.06548951, -0.59686341, -0.04866394,
-                                     1.06982083,  0.27535206, -0.53390381, -0.22963316))
-        coefs_q13E_alt_2 = np.array((-0.6484916 , -0.8291187))
-        polfit_1 = Poly(coefs_q13E_alt_1)
-        polfit_2 = Poly(coefs_q13E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_13E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_13E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_13E_alt = np.concatenate([Q_13E_alt_tmp1,Q_13E_alt_tmp2])
-        else: 
-            Q_13E_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_13E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
+        # coefs_q13E_alt_1 = np.array((-0.647381  , -0.709998  , -0.06548951, -0.59686341, -0.04866394,
+        #                              1.06982083,  0.27535206, -0.53390381, -0.22963316))
+        # coefs_q13E_alt_2 = np.array((-0.6484916 , -0.8291187))
+        # polfit_1 = Poly(coefs_q13E_alt_1)
+        # polfit_2 = Poly(coefs_q13E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_13E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_13E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_13E_alt = np.concatenate([Q_13E_alt_tmp1,Q_13E_alt_tmp2])
+        # else: 
+        #     Q_13E_alt = 10**(polfit_1(np.log10(self.energy)))
 
 
         #######
@@ -1329,23 +1337,25 @@ class CrossSecH:
             Q_2pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_2pE = Q_2pE*1e-13/(eth*(self.energy*1e3))*1e17
 
-        #######
-        # Q_2pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
-        coefs_q2pE_alt_1 = np.array((0.64219178, -0.89715704, -0.0933835 , -0.03788044,  0.17886587,
-                                     0.14572807, -0.08295148, -0.10081622, -0.02376949))
-        coefs_q2pE_alt_2 = np.array((0.63663501, -0.90108125))
-        polfit_1 = Poly(coefs_q2pE_alt_1)
-        polfit_2 = Poly(coefs_q2pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_2pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_2pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_2pE_alt = np.concatenate([Q_2pE_alt_tmp1,Q_2pE_alt_tmp2])
-        else: 
-            Q_2pE_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_2pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
+        # coefs_q2pE_alt_1 = np.array((0.64219178, -0.89715704, -0.0933835 , -0.03788044,  0.17886587,
+        #                              0.14572807, -0.08295148, -0.10081622, -0.02376949))
+        # coefs_q2pE_alt_2 = np.array((0.63663501, -0.90108125))
+        # polfit_1 = Poly(coefs_q2pE_alt_1)
+        # polfit_2 = Poly(coefs_q2pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_2pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_2pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_2pE_alt = np.concatenate([Q_2pE_alt_tmp1,Q_2pE_alt_tmp2])
+        # else: 
+        #     Q_2pE_alt = 10**(polfit_1(np.log10(self.energy)))
 
         #######
         # Q_23P **
@@ -1394,23 +1404,25 @@ class CrossSecH:
         Q_23E = Q_23E * ((self.energy*1e3 - eth)/(self.energy*1e3))**C
         Q_23E = Q_23E * 5.984e-16/(eth*(self.energy*1e3/eth))*1e17
 
-        #######
-        # Q_23E (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
-        coefs_q23E_alt_1 = np.array((1.17602722, -0.84727972, -0.06286682,  0.05693193,  0.05395523,
-                                     -0.03832005, -0.0331941 ,  0.00152561,  0.00235228))
-        coefs_q23E_alt_2 = np.array((1.17839148, -0.86544671))
-        polfit_1 = Poly(coefs_q23E_alt_1)
-        polfit_2 = Poly(coefs_q23E_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_23E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_23E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_23E_alt = np.concatenate([Q_23E_alt_tmp1,Q_23E_alt_tmp2])
-        else: 
-            Q_23E_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_23E (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
+        # coefs_q23E_alt_1 = np.array((1.17602722, -0.84727972, -0.06286682,  0.05693193,  0.05395523,
+        #                              -0.03832005, -0.0331941 ,  0.00152561,  0.00235228))
+        # coefs_q23E_alt_2 = np.array((1.17839148, -0.86544671))
+        # polfit_1 = Poly(coefs_q23E_alt_1)
+        # polfit_2 = Poly(coefs_q23E_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_23E_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_23E_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_23E_alt = np.concatenate([Q_23E_alt_tmp1,Q_23E_alt_tmp2])
+        # else: 
+        #     Q_23E_alt = 10**(polfit_1(np.log10(self.energy)))
 
         #######
         # Q_3pP **
@@ -1455,23 +1467,25 @@ class CrossSecH:
             Q_3pE+= B[i]*(1 - eth/(self.energy*1e3))**i
         Q_3pE = Q_3pE*1e-13/(eth*(self.energy*1e3))*1e17
 
-        #######
-        # Q_3pE (ALT)
-        #######
-        ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
-        ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
-        coefs_q3pE_alt_1 = np.array((0.96598854, -0.96807841, -0.06514063,  0.02029611,  0.11111564,
-                                     0.0366885 , -0.05579201, -0.03962078, -0.0074238))
-        coefs_q3pE_alt_2 = np.array((0.95907927, -0.95892717))
-        polfit_1 = Poly(coefs_q3pE_alt_1)
-        polfit_2 = Poly(coefs_q3pE_alt_2)
-        if np.max(self.energy > 10):
-            eind1 = np.where(self.energy <= 10)[0][-1]
-            Q_3pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
-            Q_3pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
-            Q_3pE_alt = np.concatenate([Q_3pE_alt_tmp1,Q_3pE_alt_tmp2])
-        else: 
-            Q_3pE_alt = 10**(polfit_1(np.log10(self.energy)))
+        # #######
+        # # Q_3pE (ALT)
+        # #######
+        # ## Obtained from fitting the IAEA Vol 4 data, and extending to high energy via a 
+        # ## linear fit in log-log space. NOT AS GOOD AS THE IAEA FN!
+        # coefs_q3pE_alt_1 = np.array((0.96598854, -0.96807841, -0.06514063,  0.02029611,  0.11111564,
+        #                              0.0366885 , -0.05579201, -0.03962078, -0.0074238))
+        # coefs_q3pE_alt_2 = np.array((0.95907927, -0.95892717))
+        # polfit_1 = Poly(coefs_q3pE_alt_1)
+        # polfit_2 = Poly(coefs_q3pE_alt_2)
+        # if np.max(self.energy > 10):
+        #     eind1 = np.where(self.energy <= 10)[0]
+        #     if len(eind1)>0:
+        #         eind1 = eind1[-1]
+        #         Q_3pE_alt_tmp1 = 10**(polfit_1(np.log10(self.energy[:eind1+1])))
+        #         Q_3pE_alt_tmp2 = 10**(polfit_2(np.log10(self.energy[eind1+1:])))
+        #         Q_3pE_alt = np.concatenate([Q_3pE_alt_tmp1,Q_3pE_alt_tmp2])
+        # else: 
+        #     Q_3pE_alt = 10**(polfit_1(np.log10(self.energy)))
 
         class cs_kerr_poly_out:
             def __init__(selfout):
@@ -1486,37 +1500,37 @@ class CrossSecH:
                 selfout.Q_1pP = Q_1pP
                 selfout.Q_1pH = Q_1pH
                 selfout.Q_1pE = Q_1pE
-                selfout.Q_1pE_alt = Q_1pE_alt 
+                # selfout.Q_1pE_alt = Q_1pE_alt 
                 selfout.Q_12P = Q_12P
-                selfout.Q_12P_alt = Q_12P_alt
+                # selfout.Q_12P_alt = Q_12P_alt
                 selfout.Q_12H = Q_12H
                 selfout.Q_12H_2s = Q_12H_2s
                 selfout.Q_12H_2p = Q_12H_2p
                 selfout.Q_12E = Q_12E
-                selfout.Q_12E_alt = Q_12E_alt
+                # selfout.Q_12E_alt = Q_12E_alt
                 selfout.Q_13P = Q_13P
-                selfout.Q_13P_alt = Q_13P_alt
+                # selfout.Q_13P_alt = Q_13P_alt
                 selfout.Q_13H = Q_13H
                 selfout.Q_13H_3s = Q_13H_3s
                 selfout.Q_13H_3p = Q_13H_3p
                 selfout.Q_13H_3d = Q_13H_3d
                 selfout.Q_13E = Q_13E
-                selfout.Q_13E_alt = Q_13E_alt
+                # selfout.Q_13E_alt = Q_13E_alt
                 selfout.Q_2pP = Q_2pP
                 selfout.Q_2pP_alt = Q_2pP_alt
                 # selfout.Q_2pH = Q_2pH
                 selfout.Q_2pE = Q_2pE
-                selfout.Q_2pE_alt = Q_2pE_alt
+                # selfout.Q_2pE_alt = Q_2pE_alt
                 selfout.Q_23P = Q_23P
                 selfout.Q_23P_alt = Q_23P_alt
                 # selfout.Q_23H = Q_23H
                 selfout.Q_23E = Q_23E
-                selfout.Q_23E_alt = Q_23E_alt
+                # selfout.Q_23E_alt = Q_23E_alt
                 selfout.Q_3pP = Q_3pP
                 selfout.Q_3pP_alt = Q_3pP_alt
                 # selfout.Q_3pH = Q_3pH
                 selfout.Q_3pE = Q_3pE
-                selfout.Q_3pE_alt = Q_3pE_alt
+                # selfout.Q_3pE_alt = Q_3pE_alt
                 selfout.energy = self.energy
                 selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
@@ -1593,7 +1607,7 @@ class CrossSecH:
         ########
         # Q_p1
         ########
-        coefs_qp1 = np.array((-13.69, -2.03, 1.39, -.827, 0.988))
+        coefs_qp1 = np.array((-13.69, -2.03, 1.39, -.827, 0.0988))
         polfit = Poly(coefs_qp1)
         Q_p1 = 10**(polfit(np.log10(self.energy)))
         
@@ -1911,16 +1925,12 @@ class CrossSecHe:
     The methods attached to this class take the input energy and return various 
     cross sections (see each method for a comprehensive list). Methods are:
 
-        kerr_fit_poly -- Mostly 8-degree polynomial fits to the underlying data 
-                          held in CrossSections.py. The higher energy ranges are 
-                          fit with straight lines in logE-logQ space to extrapolate 
-                          past the underlying data (use with caution). 
-                          Also includes several functional forms from the IAEA Vol 4 
-                          (Janev et al 1993).
+        kerr_fit_poly --  n-degree polynomial fits to the underlying data 
+                          held in CrossSections.py. For now these are only 
+                          valid from 25-400 keV, since we are doing the 
+                          initial estimates using the data from Peter et al 1990.
 
         Each of these outputs an object with energy in keV and cross sections in 10^-17 cm^2.
-
-
 
     Notes
     ______
@@ -1930,20 +1940,14 @@ class CrossSecHe:
     excitation/ionisation interactions between that energetic particle with ambient 
     particles.
 
-    They are my own fits, combined with fits from sources such as IAEA. 
-
-    The underlying data for each cross section has different valid energy ranges, 
-    and so the fits have been made to those ranges, and have been extended 
-    via fitting linear decays (in logE-logQ space) to go to arbrotarily high energy 
-    (though of course those extrapolations should be used with care). 
-
-    Generally I would try and keep to 1 keV to 1 MeV. 
+    They are my own fits from the data in Peter et al 1990. Will be updated later
+    with more modern data. 
 
     The underlying data are held in seperate classes within this script, and the fitting
     functions are also located in this script. References are scattered throughout.
 
     Original:  
-    - Graham Kerr, August 2021
+    - Graham Kerr, May 2022
 
     '''
 
@@ -1962,13 +1966,18 @@ class CrossSecHe:
 
 ################################################################################
 
-    def cs_kerr_poly(self):
+  
+    def cs_kerr_polyHe(self):
         '''
-        
         This function will calculate the cross-sections required 
-        to compute the population of suprathermal Helium,
+        to compute the population of suprathermal neutral He II,
         given an energy E in keV. 
 
+        Those cross sections are: 
+
+        
+        These are n-degree polynomial fits to the values from Peter et al 
+        1990. 
 
         Parameters
         __________
@@ -1991,7 +2000,7 @@ class CrossSecHe:
         in log-log space.
 
         Graham Kerr
-        August 2021
+        May 2022
 
         '''
         ########################################################################
@@ -1999,23 +2008,137 @@ class CrossSecHe:
         ########################################################################
 
         ########
-        # Q_p1
+        # Q_HeH
         ########
-        coefs_qp1 = [2.22694265e+00,  2.19952462e-01, -2.61594140e+00,  4.88314799e+00,
-                 -4.06254721e+00,  1.49092387e+00, -2.50756210e-01,  1.43541589e-02,
-                 3.20664286e-04]
-        polfit = Poly(coefs_qp1)
+        coefs_qHeH = [59.71348146, -154.64905448,  156.84272694,  -76.9737033 ,
+                      18.34061429,   -1.70778515]
+        polfit = Poly(coefs_qHeH)
+        Q_HeH = 10.00**(polfit(np.log10(self.energy)))
 
-        Q_p1 = 10.00**(polfit(np.log10(self.energy)))
+        ########
+        # Q_HeE
+        ########
+        coefs_qHeE = [-293.0500051 ,  605.53427275, -505.99526586,  214.61229752,
+                      -46.19856489,    4.03030576]
+        polfit = Poly(coefs_qHeE)
+        Q_HeE = 10.00**(polfit(np.log10(self.energy)))
 
-        class cs_kerr_poly_out:
+        ########
+        # Q_HeP
+        ########
+        coefs_qHeP = [-115.14002004,  287.60627323, -285.47306929,  141.83573791,
+                      -35.17941228,    3.47159465]
+        polfit = Poly(coefs_qHeP)
+        Q_HeP = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_HeCT
+        ########
+        coefs_qHeCT = [84.54905591, -212.61555062,  218.03135633, -111.24684861,
+                       28.0380946 ,   -2.80392937]
+        polfit = Poly(coefs_qHeCT)
+        Q_HeCT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2H
+        ########
+        coefs_qHe2H = [557.07829595, -1392.16454083,  1365.70473693,  -659.80904131,
+                       157.35595934,   -14.84713636]
+        polfit = Poly(coefs_qHe2H)
+        Q_He2H = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2E
+        ########
+        coefs_qHe2E = [346.74390063, -709.77855665,  517.00425686, -161.50060239,
+                       18.42642086]
+        polfit = Poly(coefs_qHe2E)
+        Q_He2E = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2P
+        ########
+        coefs_qHe2P = [421.21806409, -1052.46741502,  1030.12172918,  -495.95909915,
+                       117.83983323,   -11.08030822]
+        polfit = Poly(coefs_qHe2P)
+        Q_He2P = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2CT
+        ########
+        coefs_qHe2CT = [-86.54544225,  179.64999787, -137.51272009,   46.46380778,
+                        -5.89820203]
+        polfit = Poly(coefs_qHe2CT)
+        Q_He2CT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2HCT
+        ########
+        coefs_qHe2HCT = [-39.79775294,  93.64234016, -77.65492913,  28.04059416,
+                         -3.8064501]
+        polfit = Poly(coefs_qHe2HCT)
+        Q_He2HCT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He3HCT
+        ########
+        coefs_qHe3HCT = [-264.56783414,  698.6886639 , -720.45173637,  365.79337967,
+                         -91.64956622,    9.05118512]
+        polfit = Poly(coefs_qHe3HCT)
+        Q_He3HCT = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He3exH
+        ########
+        coefs_qHe3exH = [-91.80213855,  236.18734759, -231.59889532,  110.48763622,
+                         -25.74389304,    2.31903359]
+        polfit = Poly(coefs_qHe3exH)
+        Q_He3exH = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exH
+        ########
+        coefs_qHe2exH = [597.47935295, -1490.67278721,  1455.89056019,  -699.71002519,
+                         165.90430365,   -15.55642152]
+        polfit = Poly(coefs_qHe2exH)
+        Q_He2exH = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exE
+        ########
+        coefs_qHe2exE = [31648.77757257, -94385.56261033, 115984.93787952, -75262.70667683,
+                         27225.61205903,  -5209.61833307,    412.22169851]
+        polfit = Poly(coefs_qHe2exE)
+        Q_He2exE = 10.00**(polfit(np.log10(self.energy)))
+
+        ########
+        # Q_He2exP
+        ########
+        coefs_qHe2exP = [49.40761656, -131.67060217,  136.46049305,  -69.08097386,
+                         17.15238634,   -1.67830839]
+        polfit = Poly(coefs_qHe2exP)
+        Q_He2exP = 10.00**(polfit(np.log10(self.energy)))
+
+        class cs_kerr_polyhe_out:
             def __init__(selfout):
-                selfout.Q_p1 = Q_p1
+                selfout.Q_HeH = Q_HeH
+                selfout.Q_HeE = Q_HeE
+                selfout.Q_HeP = Q_HeP
+                selfout.Q_HeCT = Q_HeCT
+                selfout.Q_He2H = Q_He2H
+                selfout.Q_He2E = Q_He2E
+                selfout.Q_He2P = Q_He2P
+                selfout.Q_He2CT = Q_He2CT
+                selfout.Q_He2HCT = Q_He2HCT
+                selfout.Q_He3HCT = Q_He3HCT
+                selfout.Q_He3exH = Q_He3exH
+                selfout.Q_He2exH = Q_He2exH
+                selfout.Q_He2exE = Q_He2exE
+                selfout.Q_He2exP = Q_He2exP
                 selfout.energy = self.energy
                 selfout.Units = 'energy in [keV], Q in [10^-17 cm^-2]'
 
-        out = cs_kerr_poly_out()
-        out = 0.0
+        out = cs_kerr_polyhe_out()
 
         return out
 
@@ -2876,6 +2999,70 @@ class cs_shah81:
                                 3.04,  2.64,  2.38,  2.18,  1.97,  1.75,  
                                 1.58,  1.38))
         self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
+
+################################################################################
+################################################################################
+################################################################################
+
+class cs_peter90:
+
+    '''
+    This class holds the energy and cross sections for various transitions, 
+    used in Peter et al 1990. Consult that paper for the references. 
+
+    Electron loss (neutral He)
+    Q_HeH: He + H -> He+ + H + e
+    Q_HeE: He + e -> He+ + e + e
+    Q_HeP: He + p -> He+ + p + e
+    Q_HeCT: He + p -> He+ + H
+
+    Electron gain (charge transfer)
+    Q_He2H: He+ + H -> He + p
+    Q_He3H: He+ + H -> He+ + p
+
+    Electron Loss (He II)
+    Q_He2H: He+ + H -> He2+ + H + e
+    Q_He2E: He+ + e -> He2+ + e + e
+    Q_He2P: He+ + p -> He2+ + p + e
+    Q_He2CT: He+ + p -> He2+ + H
+    
+    He II 2p creation:
+    Q_He3exH: He2+ + H -> He+ex + p
+    Q_He3exE: He2+ + e -> He+ex + photon
+    Q_He2exH: He+ + H -> He+ex + H
+    Q_He2exE: He+ + e -> He+ex + e
+    Q_He2exP: He+ + p -> He+ex + p
+
+
+
+
+    Energy range  25 -- 400 keV
+
+    '''
+    def __init__(self):
+        self.energy = np.array(( 25, 50, 75, 100, 150, 200, 300, 400))
+        
+        self.Q_HeH = np.array((4.7, 7.1, 7.0, 6.5, 4.3, 3.2, 2.1, 1.6))
+        self.Q_HeE = np.array((1e-4, 0.6, 3.5, 5.1, 6.0, 5.6, 3.9, 3.4))
+        self.Q_HeP = np.array((5.0, 12.0, 13.0, 12.0, 10.0, 8.0, 5.0, 4.0))
+        self.Q_HeCT = np.array((40.0, 11.0, 4.0, 2.5, 0.8, 0.3, 0.1, 0.03))
+    
+        self.Q_He2HCT = np.array((26.4, 8.7, 3.5, 2.2, 0.7, 0.23, 0.042, 0.0038))
+        self.Q_He3HCT = np.array((70.0, 20.0, 7.0, 4.0, 1.5, 0.4, 0.07, 0.015))
+
+        self.Q_He2H = np.array((0.094, 0.12, 0.36, 0.46, 0.48, 0.44, 0.40, 0.36))
+        self.Q_He2E = np.array((1e-6, 1e-5, 1e-4, 0.024, 0.39, 0.58, 0.69, 0.68))
+        self.Q_He2P = np.array((0.1, 0.2, 0.65, 0.85, 1.1, 1.1, 1.0, 0.9))
+        self.Q_He2CT = np.array((1.9, 2.6, 1.9, 1.2, 0.6, 0.2, 0.1, 0.01))
+
+        self.Q_He3exH = np.array((47.9, 13.6, 5.15, 2.35, 0.77, 0.252, 0.034, 0.0049))
+        self.Q_He2exH = np.array((0.0058, 0.009, 0.03, 0.05, 0.048, 0.044, 0.040, 0.036))
+        self.Q_He2exE = np.array((1e-6, 1e-4, 0.58, 0.69, 0.68, 0.67, 0.61, 0.56))
+        self.Q_He2exP = np.array((0.69, 0.94, 1.0, 1.0, 0.87, 0.81, 0.70, 0.61))
+
+        self.units = 'energy in [keV], Q in [10^-17 cm^-2]'
+
 
 
 ################################################################################
