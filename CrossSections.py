@@ -1607,7 +1607,7 @@ class CrossSecH:
         ########
         # Q_p1
         ########
-        coefs_qp1 = np.array((-13.69, -2.03, 1.39, -.827, 0.988))
+        coefs_qp1 = np.array((-13.69, -2.03, 1.39, -.827, 0.0988))
         polfit = Poly(coefs_qp1)
         Q_p1 = 10**(polfit(np.log10(self.energy)))
         
